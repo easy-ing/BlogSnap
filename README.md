@@ -11,6 +11,3 @@ BlogSnap empowers you to create captivating blog posts effortlessly. Start with 
 1. Clone the repository.
 2. Install dependencies.
 3. Follow the documentation to run the project.
-
-## License
-This project is licensed under the MIT License.
