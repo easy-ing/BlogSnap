@@ -1,0 +1,6 @@
+openai>=1.40.0
+python-dotenv>=1.0.1
+requests>=2.32.3
+pydantic>=2.8.2
+Markdown>=3.6
+streamlit>=1.37.0
