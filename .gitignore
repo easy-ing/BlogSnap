@@ -1,0 +1,8 @@
+__pycache__/
+*.py[cod]
+.venv/
+.env
+.tmp_uploads/
+generated_post.md
+cron.log
+.DS_Store
