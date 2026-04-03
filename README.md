@@ -73,6 +73,17 @@ cp .env.example .env
 streamlit run app.py
 ```
 
+### 4) 로컬 DB 마이그레이션 검증
+```bash
+./scripts/db_apply_migration.sh
+./scripts/db_verify_schema.sh
+```
+
+필요 시 컨테이너 종료:
+```bash
+docker compose -f docker-compose.dev.yml down
+```
+
 ## 브랜치 운영 전략
 - `main`: 항상 배포 가능한 안정 브랜치
 - `develop`: 통합 작업 브랜치
@@ -97,3 +108,8 @@ streamlit run app.py
 ## 다음 챕터
 - **Day 2: 시스템 아키텍처 설계**
 - 목표: 프론트/백엔드/비동기 작업/DB 경계 정의
+- 문서 초안: [docs/day2-architecture.md](/Users/jin/Desktop/easy_ing/BlogSnap/docs/day2-architecture.md)
+- Day3 준비 산출물:
+  - [docs/day3-db-schema.md](/Users/jin/Desktop/easy_ing/BlogSnap/docs/day3-db-schema.md)
+  - [db/migrations/0001_init.sql](/Users/jin/Desktop/easy_ing/BlogSnap/db/migrations/0001_init.sql)
+  - [docs/day3-retry-policy.md](/Users/jin/Desktop/easy_ing/BlogSnap/docs/day3-retry-policy.md)
