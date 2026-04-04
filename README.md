@@ -113,3 +113,25 @@ docker compose -f docker-compose.dev.yml down
   - [docs/day3-db-schema.md](/Users/jin/Desktop/easy_ing/BlogSnap/docs/day3-db-schema.md)
   - [db/migrations/0001_init.sql](/Users/jin/Desktop/easy_ing/BlogSnap/db/migrations/0001_init.sql)
   - [docs/day3-retry-policy.md](/Users/jin/Desktop/easy_ing/BlogSnap/docs/day3-retry-policy.md)
+
+## Day 3 진행 현황 (2026-04-04)
+- 실행 계획: [docs/day3-plan.md](/Users/jin/Desktop/easy_ing/BlogSnap/docs/day3-plan.md)
+- 백엔드 스캐폴드: [backend/app/main.py](/Users/jin/Desktop/easy_ing/BlogSnap/backend/app/main.py)
+- DB 모델: [backend/app/models/entities.py](/Users/jin/Desktop/easy_ing/BlogSnap/backend/app/models/entities.py)
+- API 골격:
+  - [backend/app/api/drafts.py](/Users/jin/Desktop/easy_ing/BlogSnap/backend/app/api/drafts.py)
+  - [backend/app/api/publish.py](/Users/jin/Desktop/easy_ing/BlogSnap/backend/app/api/publish.py)
+  - [backend/app/api/jobs.py](/Users/jin/Desktop/easy_ing/BlogSnap/backend/app/api/jobs.py)
+
+### Day 3 로컬 실행
+```bash
+python3 -m pip install -r requirements.txt
+docker compose -f docker-compose.dev.yml up -d postgres
+./scripts/db_apply_migration.sh
+python3 -m uvicorn backend.app.main:app --reload --port 8000
+```
+
+헬스체크:
+```bash
+curl http://127.0.0.1:8000/health
+```
