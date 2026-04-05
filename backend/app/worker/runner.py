@@ -1,0 +1,95 @@
+from datetime import datetime, timezone
+from typing import Optional
+from uuid import UUID
+
+from sqlalchemy import or_, select
+from sqlalchemy.orm import Session
+
+from backend.app.models.entities import Job
+from backend.app.models.enums import JobStatus
+from backend.app.worker.executor import execute_job
+from backend.app.worker.retry_policy import compute_next_retry_at, is_retryable
+
+
+class JobRunner:
+    def __init__(self, db: Session) -> None:
+        self.db = db
+
+    def claim_next_job(self) -> Optional[Job]:
+        now = datetime.now(timezone.utc)
+        stmt = (
+            select(Job)
+            .where(
+                Job.status.in_([JobStatus.PENDING, JobStatus.RETRYING]),
+                or_(Job.next_retry_at.is_(None), Job.next_retry_at <= now),
+            )
+            .order_by(Job.created_at.asc())
+            .limit(1)
+        )
+        job = self.db.scalar(stmt)
+        if not job:
+            return None
+
+        job.status = JobStatus.RUNNING
+        job.attempt_count = (job.attempt_count or 0) + 1
+        job.started_at = now
+        job.updated_at = now
+        self.db.commit()
+        self.db.refresh(job)
+        return job
+
+    def run_job_by_id(self, job_id: UUID) -> Job:
+        job = self.db.get(Job, job_id)
+        if not job:
+            raise ValueError("Job not found")
+
+        if job.status not in (JobStatus.PENDING, JobStatus.RETRYING, JobStatus.RUNNING):
+            return job
+
+        if job.status != JobStatus.RUNNING:
+            now = datetime.now(timezone.utc)
+            job.status = JobStatus.RUNNING
+            job.attempt_count = (job.attempt_count or 0) + 1
+            job.started_at = now
+            job.updated_at = now
+            self.db.commit()
+            self.db.refresh(job)
+
+        return self._execute_with_retry(job)
+
+    def run_next(self) -> Optional[Job]:
+        job = self.claim_next_job()
+        if not job:
+            return None
+        return self._execute_with_retry(job)
+
+    def _execute_with_retry(self, job: Job) -> Job:
+        try:
+            result = execute_job(self.db, job)
+            now = datetime.now(timezone.utc)
+            job.result_payload = result
+            job.status = JobStatus.SUCCEEDED
+            job.error_message = None
+            job.next_retry_at = None
+            job.completed_at = now
+            job.updated_at = now
+            self.db.commit()
+            self.db.refresh(job)
+            return job
+        except Exception as exc:
+            now = datetime.now(timezone.utc)
+            job.error_message = str(exc)
+            job.updated_at = now
+
+            can_retry = is_retryable(exc) and job.attempt_count < job.max_attempts
+            if can_retry:
+                job.status = JobStatus.RETRYING
+                job.next_retry_at = compute_next_retry_at(job.type, job.attempt_count)
+            else:
+                job.status = JobStatus.FAILED
+                job.completed_at = now
+                job.next_retry_at = None
+
+            self.db.commit()
+            self.db.refresh(job)
+            return job

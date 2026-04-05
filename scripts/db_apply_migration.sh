@@ -24,6 +24,6 @@ until docker exec blogsnap-postgres pg_isready -U blogsnap -d blogsnap >/dev/nul
 done
 
 echo "[INFO] Applying migration: $MIGRATION_FILE"
-docker exec -i blogsnap-postgres psql -U blogsnap -d blogsnap < "$MIGRATION_FILE"
+docker exec -i blogsnap-postgres psql -v ON_ERROR_STOP=1 -U blogsnap -d blogsnap < "$MIGRATION_FILE"
 
 echo "[OK] Migration applied successfully."
