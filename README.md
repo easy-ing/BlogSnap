@@ -62,6 +62,7 @@ cp .env.example .env
 `.env` 항목:
 - `OPENAI_API_KEY`
 - `OPENAI_MODEL` (예: `gpt-5-mini`)
+- `DATABASE_URL` (예: `postgresql+psycopg://blogsnap:blogsnap@localhost:55432/blogsnap`)
 - `BLOG_PROVIDER=wordpress`
 - `BLOG_BASE_URL`
 - `BLOG_USERNAME`
@@ -75,6 +76,7 @@ streamlit run app.py
 
 ### 4) 로컬 DB 마이그레이션 검증
 ```bash
+docker compose -f docker-compose.dev.yml up -d postgres
 ./scripts/db_apply_migration.sh
 ./scripts/db_verify_schema.sh
 ```
@@ -135,3 +137,24 @@ python3 -m uvicorn backend.app.main:app --reload --port 8000
 ```bash
 curl http://127.0.0.1:8000/health
 ```
+
+## Day 4 진행 현황 (2026-04-05)
+- 실행 계획: [docs/day4-plan.md](/Users/jin/Desktop/easy_ing/BlogSnap/docs/day4-plan.md)
+- 워커 런너: [backend/app/worker/runner.py](/Users/jin/Desktop/easy_ing/BlogSnap/backend/app/worker/runner.py)
+- 워커 실행기: [backend/app/worker/executor.py](/Users/jin/Desktop/easy_ing/BlogSnap/backend/app/worker/executor.py)
+- 재시도 정책: [backend/app/worker/retry_policy.py](/Users/jin/Desktop/easy_ing/BlogSnap/backend/app/worker/retry_policy.py)
+- 수동 실행 API:
+  - `POST /v1/jobs/{job_id}/run`
+  - `POST /v1/jobs/run-next`
+- 데모 스크립트:
+  - [scripts/day4_seed_demo.py](/Users/jin/Desktop/easy_ing/BlogSnap/scripts/day4_seed_demo.py)
+  - [scripts/day4_run_demo.sh](/Users/jin/Desktop/easy_ing/BlogSnap/scripts/day4_run_demo.sh)
+
+### Day 4 데모 실행
+```bash
+docker compose -f docker-compose.dev.yml up -d postgres
+./scripts/db_reset.sh
+./scripts/day4_run_demo.sh
+```
+
+위 흐름에서 `draft_generate` Job이 `SUCCEEDED`로 전이되고, Draft 3건 생성되는 것을 확인합니다.
