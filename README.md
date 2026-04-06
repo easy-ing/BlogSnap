@@ -63,6 +63,8 @@ cp .env.example .env
 - `OPENAI_API_KEY`
 - `OPENAI_MODEL` (예: `gpt-5-mini`)
 - `DATABASE_URL` (예: `postgresql+psycopg://blogsnap:blogsnap@localhost:55432/blogsnap`)
+- `WORKER_PUBLISH_MODE` (`mock` 또는 `wordpress`)
+- `WORDPRESS_BASE_URL`, `WORDPRESS_USERNAME`, `WORDPRESS_APP_PASSWORD` (wordpress 모드 시)
 - `BLOG_PROVIDER=wordpress`
 - `BLOG_BASE_URL`
 - `BLOG_USERNAME`
@@ -158,3 +160,23 @@ docker compose -f docker-compose.dev.yml up -d postgres
 ```
 
 위 흐름에서 `draft_generate` Job이 `SUCCEEDED`로 전이되고, Draft 3건 생성되는 것을 확인합니다.
+
+## Day 5 진행 현황 (2026-04-06)
+- 실행 계획: [docs/day5-plan.md](/Users/jin/Desktop/easy_ing/BlogSnap/docs/day5-plan.md)
+- 추가 API:
+  - `POST /v1/drafts/{draft_id}/select`
+  - `GET /v1/publish/{publish_job_id}`
+- publish worker 확장:
+  - `mock` 모드
+  - `wordpress` 모드 (환경변수 기반)
+- 발행 idempotency 처리:
+  - 동일 `idempotency_key` 발행 요청 시 기존 Job 재사용
+
+### Day 5 데모 실행
+```bash
+docker compose -f docker-compose.dev.yml up -d postgres
+./scripts/db_reset.sh
+./scripts/day5_run_demo.sh
+```
+
+위 흐름에서 `draft 선택 -> publish job 생성 -> job 실행 -> publish 조회(PUBLISHED)`까지 확인합니다.

@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 
 from backend.app.db.session import get_db
 from backend.app.models.entities import Draft, Job, Project
-from backend.app.models.enums import JobStatus, JobType
+from backend.app.models.enums import DraftStatus, JobStatus, JobType
 from backend.app.schemas.drafts import DraftGenerateRequest, DraftItemResponse, DraftRegenerateRequest
 from backend.app.schemas.jobs import JobResponse
 
@@ -60,3 +60,24 @@ def regenerate_draft(draft_id: UUID, payload: DraftRegenerateRequest, db: Sessio
     db.commit()
     db.refresh(job)
     return job
+
+
+@router.post("/{draft_id}/select", response_model=DraftItemResponse)
+def select_draft(draft_id: UUID, db: Session = Depends(get_db)) -> Draft:
+    draft = db.get(Draft, draft_id)
+    if not draft:
+        raise HTTPException(status_code=404, detail="Draft not found")
+
+    siblings = list(
+        db.scalars(
+            select(Draft).where(
+                Draft.project_id == draft.project_id,
+                Draft.version_no == draft.version_no,
+            )
+        )
+    )
+    for item in siblings:
+        item.status = DraftStatus.SELECTED if item.id == draft.id else DraftStatus.ARCHIVED
+    db.commit()
+    db.refresh(draft)
+    return draft

@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 from backend.app.core.config import settings
 from backend.app.models.entities import Draft, Job, PublishJob
 from backend.app.models.enums import DraftStatus, JobType, PublishStatus
+from backend.app.worker.publishers import publish_to_wordpress
 
 
 def _next_version_no(db: Session, project_id: uuid.UUID) -> int:
@@ -75,23 +76,47 @@ def _execute_publish_job(db: Session, job: Job) -> dict:
     if not publish_job:
         raise ValueError("PublishJob not found for job")
 
-    if settings.worker_publish_mode != "mock":
-        raise ValueError("Only mock publish mode is enabled in Day4 scaffold")
+    draft = db.get(Draft, publish_job.draft_id)
+    if not draft:
+        raise ValueError("Draft not found for publish job")
 
-    publish_job.status = PublishStatus.PUBLISHED
-    publish_job.external_post_id = str(publish_job.id)
-    publish_job.post_url = f"{settings.worker_mock_publish_base_url}/{publish_job.id}"
-    publish_job.response_snapshot = {
-        "mode": "mock",
-        "external_post_id": publish_job.external_post_id,
-        "post_url": publish_job.post_url,
-    }
+    mode = settings.worker_publish_mode.strip().lower()
+    if mode == "mock":
+        publish_job.status = PublishStatus.PUBLISHED
+        publish_job.external_post_id = str(publish_job.id)
+        publish_job.post_url = f"{settings.worker_mock_publish_base_url}/{publish_job.id}"
+        publish_job.response_snapshot = {
+            "mode": "mock",
+            "external_post_id": publish_job.external_post_id,
+            "post_url": publish_job.post_url,
+        }
+    elif mode == "wordpress":
+        tags = [t.strip() for t in settings.worker_publish_default_tags.split(",") if t.strip()]
+        external_id, post_url = publish_to_wordpress(
+            base_url=settings.wordpress_base_url,
+            username=settings.wordpress_username,
+            app_password=settings.wordpress_app_password,
+            title=draft.title,
+            markdown=draft.markdown,
+            tags=tags,
+        )
+        publish_job.status = PublishStatus.PUBLISHED
+        publish_job.external_post_id = external_id
+        publish_job.post_url = post_url
+        publish_job.response_snapshot = {
+            "mode": "wordpress",
+            "external_post_id": external_id,
+            "post_url": post_url,
+        }
+    else:
+        raise ValueError(f"Unsupported worker publish mode: {settings.worker_publish_mode}")
+
     publish_job.updated_at = datetime.utcnow()
 
     return {
         "publish_job_id": str(publish_job.id),
         "post_url": publish_job.post_url,
-        "mode": "mock",
+        "mode": mode,
     }
 
 
