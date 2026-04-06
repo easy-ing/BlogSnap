@@ -15,6 +15,7 @@ class JobResponse(BaseModel):
     attempt_count: int
     max_attempts: int
     error_message: Optional[str]
+    result_payload: dict
     next_retry_at: Optional[datetime]
     started_at: Optional[datetime]
     completed_at: Optional[datetime]
