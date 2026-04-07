@@ -1,4 +1,4 @@
-# Backend (Day 5 Publish Flow)
+# Backend (Day 6 Worker Daemon)
 
 ## Run
 ```bash
@@ -9,6 +9,8 @@ uvicorn backend.app.main:app --reload --port 8000
 - `DATABASE_URL` (default: `postgresql+psycopg://blogsnap:blogsnap@localhost:55432/blogsnap`)
 - `WORKER_PUBLISH_MODE` (`mock` or `wordpress`)
 - `WORKER_MOCK_PUBLISH_BASE_URL` (mock mode URL prefix)
+- `WORKER_POLL_SECONDS` (daemon polling interval)
+- `WORKER_BATCH_SIZE` (jobs per poll)
 - `WORDPRESS_BASE_URL`, `WORDPRESS_USERNAME`, `WORDPRESS_APP_PASSWORD` (wordpress mode)
 - `WORKER_PUBLISH_DEFAULT_TAGS` (comma-separated)
 
@@ -23,6 +25,8 @@ uvicorn backend.app.main:app --reload --port 8000
 - `GET /v1/jobs/{job_id}`
 - `POST /v1/jobs/{job_id}/run`
 - `POST /v1/jobs/run-next`
+- `POST /v1/jobs/run-batch?limit=10`
+- `GET /v1/jobs/queue-summary`
 
 ## Worker
 Run next pending/retrying job once:
@@ -30,8 +34,13 @@ Run next pending/retrying job once:
 PYTHONPATH=. python3 -m backend.app.worker.run_once
 ```
 
-Day4 demo:
+Run daemon loop:
+```bash
+PYTHONPATH=. python3 -m backend.app.worker.run_forever
+```
+
+Day6 demo:
 ```bash
 ./scripts/db_reset.sh
-./scripts/day4_run_demo.sh
+./scripts/day6_run_demo.sh
 ```
