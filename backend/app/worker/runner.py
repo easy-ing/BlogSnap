@@ -63,6 +63,17 @@ class JobRunner:
             return None
         return self._execute_with_retry(job)
 
+    def run_batch(self, limit: int = 10) -> list[Job]:
+        if limit < 1:
+            return []
+        processed: list[Job] = []
+        for _ in range(limit):
+            job = self.run_next()
+            if not job:
+                break
+            processed.append(job)
+        return processed
+
     def _execute_with_retry(self, job: Job) -> Job:
         try:
             result = execute_job(self.db, job)

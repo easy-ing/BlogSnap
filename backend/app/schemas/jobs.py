@@ -23,3 +23,11 @@ class JobResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class QueueSummaryResponse(BaseModel):
+    pending: int
+    retrying: int
+    running: int
+    failed: int
+    succeeded: int

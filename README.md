@@ -64,6 +64,7 @@ cp .env.example .env
 - `OPENAI_MODEL` (예: `gpt-5-mini`)
 - `DATABASE_URL` (예: `postgresql+psycopg://blogsnap:blogsnap@localhost:55432/blogsnap`)
 - `WORKER_PUBLISH_MODE` (`mock` 또는 `wordpress`)
+- `WORKER_POLL_SECONDS`, `WORKER_BATCH_SIZE`
 - `WORDPRESS_BASE_URL`, `WORDPRESS_USERNAME`, `WORDPRESS_APP_PASSWORD` (wordpress 모드 시)
 - `BLOG_PROVIDER=wordpress`
 - `BLOG_BASE_URL`
@@ -180,3 +181,23 @@ docker compose -f docker-compose.dev.yml up -d postgres
 ```
 
 위 흐름에서 `draft 선택 -> publish job 생성 -> job 실행 -> publish 조회(PUBLISHED)`까지 확인합니다.
+
+## Day 6 진행 현황 (2026-04-07)
+- 실행 계획: [docs/day6-plan.md](/Users/jin/Desktop/easy_ing/BlogSnap/docs/day6-plan.md)
+- 워커 데몬:
+  - [backend/app/worker/run_forever.py](/Users/jin/Desktop/easy_ing/BlogSnap/backend/app/worker/run_forever.py)
+  - 배치 실행: `run_batch(limit)`
+- Job API 확장:
+  - `POST /v1/jobs/run-batch?limit=...`
+  - `GET /v1/jobs/queue-summary`
+- 데모 스크립트:
+  - [scripts/day6_seed_many_jobs.py](/Users/jin/Desktop/easy_ing/BlogSnap/scripts/day6_seed_many_jobs.py)
+  - [scripts/day6_run_demo.sh](/Users/jin/Desktop/easy_ing/BlogSnap/scripts/day6_run_demo.sh)
+
+### Day 6 데모 실행
+```bash
+docker compose -f docker-compose.dev.yml up -d postgres
+./scripts/day6_run_demo.sh
+```
+
+위 흐름에서 `queue-summary(before/after)`와 `run-batch`, `daemon(max-loops)` 처리 결과를 확인합니다.
