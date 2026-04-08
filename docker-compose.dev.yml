@@ -17,5 +17,39 @@ services:
       timeout: 3s
       retries: 10
 
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    container_name: blogsnap-api
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql+psycopg://blogsnap:blogsnap@postgres:5432/blogsnap
+      WORKER_PUBLISH_MODE: mock
+      LOG_LEVEL: INFO
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "8000:8000"
+    command: ["python", "-m", "uvicorn", "backend.app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    container_name: blogsnap-worker
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql+psycopg://blogsnap:blogsnap@postgres:5432/blogsnap
+      WORKER_PUBLISH_MODE: mock
+      WORKER_POLL_SECONDS: 3
+      WORKER_BATCH_SIZE: 10
+      LOG_LEVEL: INFO
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command: ["python", "-m", "backend.app.worker.run_forever"]
+
 volumes:
   blogsnap_pgdata:

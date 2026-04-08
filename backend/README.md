@@ -1,4 +1,4 @@
-# Backend (Day 6 Worker Daemon)
+# Backend (Day 7 Local Ops Stack)
 
 ## Run
 ```bash
@@ -11,6 +11,7 @@ uvicorn backend.app.main:app --reload --port 8000
 - `WORKER_MOCK_PUBLISH_BASE_URL` (mock mode URL prefix)
 - `WORKER_POLL_SECONDS` (daemon polling interval)
 - `WORKER_BATCH_SIZE` (jobs per poll)
+- `LOG_LEVEL` (`INFO`, `DEBUG`, ...)
 - `WORDPRESS_BASE_URL`, `WORDPRESS_USERNAME`, `WORDPRESS_APP_PASSWORD` (wordpress mode)
 - `WORKER_PUBLISH_DEFAULT_TAGS` (comma-separated)
 
@@ -43,4 +44,9 @@ Day6 demo:
 ```bash
 ./scripts/db_reset.sh
 ./scripts/day6_run_demo.sh
+```
+
+Day7 stack run + smoke test:
+```bash
+./scripts/day7_run_stack.sh
 ```
