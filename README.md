@@ -65,6 +65,7 @@ cp .env.example .env
 - `DATABASE_URL` (예: `postgresql+psycopg://blogsnap:blogsnap@localhost:55432/blogsnap`)
 - `WORKER_PUBLISH_MODE` (`mock` 또는 `wordpress`)
 - `WORKER_POLL_SECONDS`, `WORKER_BATCH_SIZE`
+- `LOG_LEVEL`
 - `WORDPRESS_BASE_URL`, `WORDPRESS_USERNAME`, `WORDPRESS_APP_PASSWORD` (wordpress 모드 시)
 - `BLOG_PROVIDER=wordpress`
 - `BLOG_BASE_URL`
@@ -201,3 +202,25 @@ docker compose -f docker-compose.dev.yml up -d postgres
 ```
 
 위 흐름에서 `queue-summary(before/after)`와 `run-batch`, `daemon(max-loops)` 처리 결과를 확인합니다.
+
+## Day 7 진행 현황 (2026-04-08)
+- 실행 계획: [docs/day7-plan.md](/Users/jin/Desktop/easy_ing/BlogSnap/docs/day7-plan.md)
+- 운영형 로컬 스택:
+  - [Dockerfile.backend](/Users/jin/Desktop/easy_ing/BlogSnap/Dockerfile.backend)
+  - [docker-compose.dev.yml](/Users/jin/Desktop/easy_ing/BlogSnap/docker-compose.dev.yml) (`postgres + api + worker`)
+- 헬스체크 확장:
+  - `GET /health`
+  - `GET /health/ready` (DB readiness)
+- 요청 로깅:
+  - [backend/app/core/middleware.py](/Users/jin/Desktop/easy_ing/BlogSnap/backend/app/core/middleware.py)
+  - request_id, status_code, duration_ms 기록
+- 스모크 테스트:
+  - [scripts/day7_smoke_test.sh](/Users/jin/Desktop/easy_ing/BlogSnap/scripts/day7_smoke_test.sh)
+  - [scripts/day7_run_stack.sh](/Users/jin/Desktop/easy_ing/BlogSnap/scripts/day7_run_stack.sh)
+
+### Day 7 실행
+```bash
+./scripts/day7_run_stack.sh
+```
+
+위 실행으로 `health`, `health/ready`, `queue-summary`까지 자동 확인합니다.

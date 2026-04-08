@@ -7,6 +7,7 @@ class Settings(BaseSettings):
     api_version: str = "0.1.0"
     worker_poll_seconds: int = 3
     worker_batch_size: int = 10
+    log_level: str = "INFO"
     worker_publish_mode: str = "mock"
     worker_mock_publish_base_url: str = "https://example.com/mock-post"
     wordpress_base_url: str = ""
