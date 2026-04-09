@@ -66,6 +66,7 @@ cp .env.example .env
 - `WORKER_PUBLISH_MODE` (`mock` 또는 `wordpress`)
 - `WORKER_POLL_SECONDS`, `WORKER_BATCH_SIZE`
 - `LOG_LEVEL`
+- `PROMETHEUS_ENABLED`
 - `WORDPRESS_BASE_URL`, `WORDPRESS_USERNAME`, `WORDPRESS_APP_PASSWORD` (wordpress 모드 시)
 - `BLOG_PROVIDER=wordpress`
 - `BLOG_BASE_URL`
@@ -224,3 +225,24 @@ docker compose -f docker-compose.dev.yml up -d postgres
 ```
 
 위 실행으로 `health`, `health/ready`, `queue-summary`까지 자동 확인합니다.
+
+## Day 8 진행 현황 (2026-04-09)
+- 실행 계획: [docs/day8-plan.md](/Users/jin/Desktop/easy_ing/BlogSnap/docs/day8-plan.md)
+- 메트릭 추가:
+  - [backend/app/core/metrics.py](/Users/jin/Desktop/easy_ing/BlogSnap/backend/app/core/metrics.py)
+  - `GET /health/metrics` (Prometheus 형식)
+- 요청/잡 메트릭 수집:
+  - HTTP requests total / duration
+  - jobs processed outcome(succeeded/retrying/failed)
+- Prometheus 연동:
+  - [monitoring/prometheus.yml](/Users/jin/Desktop/easy_ing/BlogSnap/monitoring/prometheus.yml)
+  - [docker-compose.dev.yml](/Users/jin/Desktop/easy_ing/BlogSnap/docker-compose.dev.yml) (`prometheus` 서비스 추가)
+- 관측 데모:
+  - [scripts/day8_observability_demo.sh](/Users/jin/Desktop/easy_ing/BlogSnap/scripts/day8_observability_demo.sh)
+
+### Day 8 실행
+```bash
+./scripts/day8_observability_demo.sh
+```
+
+위 실행으로 API metrics 샘플과 Prometheus target `health=up` 상태를 확인합니다.

@@ -1,4 +1,4 @@
-# Backend (Day 7 Local Ops Stack)
+# Backend (Day 8 Observability)
 
 ## Run
 ```bash
@@ -12,11 +12,14 @@ uvicorn backend.app.main:app --reload --port 8000
 - `WORKER_POLL_SECONDS` (daemon polling interval)
 - `WORKER_BATCH_SIZE` (jobs per poll)
 - `LOG_LEVEL` (`INFO`, `DEBUG`, ...)
+- `PROMETHEUS_ENABLED` (`true`/`false`)
 - `WORDPRESS_BASE_URL`, `WORDPRESS_USERNAME`, `WORDPRESS_APP_PASSWORD` (wordpress mode)
 - `WORKER_PUBLISH_DEFAULT_TAGS` (comma-separated)
 
 ## Endpoints (initial)
 - `GET /health`
+- `GET /health/ready`
+- `GET /health/metrics`
 - `POST /v1/drafts/generate`
 - `GET /v1/drafts?project_id=...`
 - `POST /v1/drafts/{draft_id}/regenerate`
@@ -49,4 +52,9 @@ Day6 demo:
 Day7 stack run + smoke test:
 ```bash
 ./scripts/day7_run_stack.sh
+```
+
+Day8 observability demo:
+```bash
+./scripts/day8_observability_demo.sh
 ```

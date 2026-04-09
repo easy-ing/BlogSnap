@@ -5,6 +5,8 @@ import uuid
 from fastapi import Request
 from starlette.middleware.base import BaseHTTPMiddleware
 
+from backend.app.core.metrics import REQUEST_COUNT, REQUEST_DURATION
+
 
 logger = logging.getLogger("blogsnap.request")
 
@@ -17,6 +19,15 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
         duration_ms = round((time.perf_counter() - start) * 1000, 2)
 
         response.headers["x-request-id"] = request_id
+        REQUEST_COUNT.labels(
+            method=request.method,
+            path=request.url.path,
+            status_code=str(response.status_code),
+        ).inc()
+        REQUEST_DURATION.labels(
+            method=request.method,
+            path=request.url.path,
+        ).observe(duration_ms / 1000.0)
         logger.info(
             "request_id=%s method=%s path=%s status=%s duration_ms=%s",
             request_id,
