@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 
 from backend.app.models.entities import Job
 from backend.app.models.enums import JobStatus
+from backend.app.core.metrics import JOB_PROCESSED
 from backend.app.worker.executor import execute_job
 from backend.app.worker.retry_policy import compute_next_retry_at, is_retryable
 
@@ -86,6 +87,7 @@ class JobRunner:
             job.updated_at = now
             self.db.commit()
             self.db.refresh(job)
+            JOB_PROCESSED.labels(job_type=job.type.value, outcome="succeeded").inc()
             return job
         except Exception as exc:
             now = datetime.now(timezone.utc)
@@ -96,10 +98,12 @@ class JobRunner:
             if can_retry:
                 job.status = JobStatus.RETRYING
                 job.next_retry_at = compute_next_retry_at(job.type, job.attempt_count)
+                JOB_PROCESSED.labels(job_type=job.type.value, outcome="retrying").inc()
             else:
                 job.status = JobStatus.FAILED
                 job.completed_at = now
                 job.next_retry_at = None
+                JOB_PROCESSED.labels(job_type=job.type.value, outcome="failed").inc()
 
             self.db.commit()
             self.db.refresh(job)
