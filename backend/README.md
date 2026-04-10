@@ -1,4 +1,4 @@
-# Backend (Day 8 Observability)
+# Backend (Day 9 Alerts & Dashboards)
 
 ## Run
 ```bash
@@ -13,6 +13,7 @@ uvicorn backend.app.main:app --reload --port 8000
 - `WORKER_BATCH_SIZE` (jobs per poll)
 - `LOG_LEVEL` (`INFO`, `DEBUG`, ...)
 - `PROMETHEUS_ENABLED` (`true`/`false`)
+- `GRAFANA_ADMIN_PASSWORD` (default `admin`)
 - `WORDPRESS_BASE_URL`, `WORDPRESS_USERNAME`, `WORDPRESS_APP_PASSWORD` (wordpress mode)
 - `WORKER_PUBLISH_DEFAULT_TAGS` (comma-separated)
 
@@ -57,4 +58,9 @@ Day7 stack run + smoke test:
 Day8 observability demo:
 ```bash
 ./scripts/day8_observability_demo.sh
+```
+
+Day9 observability+ demo:
+```bash
+./scripts/day9_observability_plus_demo.sh
 ```

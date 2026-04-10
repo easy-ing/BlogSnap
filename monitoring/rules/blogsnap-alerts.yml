@@ -1,0 +1,41 @@
+groups:
+  - name: blogsnap-alerts
+    rules:
+      - alert: BlogSnapAPIHighErrorRate
+        expr: |
+          (
+            sum(rate(blogsnap_http_requests_total{status_code=~"5.."}[5m]))
+            /
+            clamp_min(sum(rate(blogsnap_http_requests_total[5m])), 0.001)
+          ) > 0.05
+        for: 2m
+        labels:
+          severity: warning
+          service: api
+        annotations:
+          summary: "BlogSnap API 5xx error rate is high"
+          description: "5xx error rate is above 5% for 2 minutes."
+
+      - alert: BlogSnapAPISlowP95
+        expr: |
+          histogram_quantile(
+            0.95,
+            sum by (le) (rate(blogsnap_http_request_duration_seconds_bucket[5m]))
+          ) > 1.0
+        for: 5m
+        labels:
+          severity: warning
+          service: api
+        annotations:
+          summary: "BlogSnap API p95 latency is high"
+          description: "p95 latency is above 1s for 5 minutes."
+
+      - alert: BlogSnapJobsFailing
+        expr: sum(increase(blogsnap_jobs_processed_total{outcome="failed"}[10m])) > 0
+        for: 1m
+        labels:
+          severity: critical
+          service: worker
+        annotations:
+          summary: "BlogSnap worker job failures detected"
+          description: "At least one failed job in the last 10 minutes."
