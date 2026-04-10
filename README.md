@@ -67,6 +67,7 @@ cp .env.example .env
 - `WORKER_POLL_SECONDS`, `WORKER_BATCH_SIZE`
 - `LOG_LEVEL`
 - `PROMETHEUS_ENABLED`
+- `GRAFANA_ADMIN_PASSWORD`
 - `WORDPRESS_BASE_URL`, `WORDPRESS_USERNAME`, `WORDPRESS_APP_PASSWORD` (wordpress 모드 시)
 - `BLOG_PROVIDER=wordpress`
 - `BLOG_BASE_URL`
@@ -246,3 +247,23 @@ docker compose -f docker-compose.dev.yml up -d postgres
 ```
 
 위 실행으로 API metrics 샘플과 Prometheus target `health=up` 상태를 확인합니다.
+
+## Day 9 진행 현황 (2026-04-10)
+- 실행 계획: [docs/day9-plan.md](/Users/jin/Desktop/easy_ing/BlogSnap/docs/day9-plan.md)
+- Alert rules:
+  - [monitoring/rules/blogsnap-alerts.yml](/Users/jin/Desktop/easy_ing/BlogSnap/monitoring/rules/blogsnap-alerts.yml)
+- Alertmanager:
+  - [monitoring/alertmanager/alertmanager.yml](/Users/jin/Desktop/easy_ing/BlogSnap/monitoring/alertmanager/alertmanager.yml)
+- Grafana provisioning:
+  - [monitoring/grafana/provisioning/datasources/prometheus.yml](/Users/jin/Desktop/easy_ing/BlogSnap/monitoring/grafana/provisioning/datasources/prometheus.yml)
+  - [monitoring/grafana/provisioning/dashboards/dashboards.yml](/Users/jin/Desktop/easy_ing/BlogSnap/monitoring/grafana/provisioning/dashboards/dashboards.yml)
+  - [monitoring/grafana/dashboards/blogsnap-overview.json](/Users/jin/Desktop/easy_ing/BlogSnap/monitoring/grafana/dashboards/blogsnap-overview.json)
+- Day9 데모:
+  - [scripts/day9_observability_plus_demo.sh](/Users/jin/Desktop/easy_ing/BlogSnap/scripts/day9_observability_plus_demo.sh)
+
+### Day 9 실행
+```bash
+./scripts/day9_observability_plus_demo.sh
+```
+
+위 실행으로 Prometheus rules 로드, Alertmanager ready, Grafana datasource(provisioned)까지 확인합니다.
