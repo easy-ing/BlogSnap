@@ -1,4 +1,4 @@
-# Backend (Day 9 Alerts & Dashboards)
+# Backend (Day 10 Alert Delivery)
 
 ## Run
 ```bash
@@ -14,6 +14,8 @@ uvicorn backend.app.main:app --reload --port 8000
 - `LOG_LEVEL` (`INFO`, `DEBUG`, ...)
 - `PROMETHEUS_ENABLED` (`true`/`false`)
 - `GRAFANA_ADMIN_PASSWORD` (default `admin`)
+- `ALERT_WEBHOOK_PORT` (default `5001`, alert-webhook receiver)
+- `ALERT_WEBHOOK_LOG_PATH` (default `/data/alerts.jsonl`)
 - `WORDPRESS_BASE_URL`, `WORDPRESS_USERNAME`, `WORDPRESS_APP_PASSWORD` (wordpress mode)
 - `WORKER_PUBLISH_DEFAULT_TAGS` (comma-separated)
 
@@ -63,4 +65,9 @@ Day8 observability demo:
 Day9 observability+ demo:
 ```bash
 ./scripts/day9_observability_plus_demo.sh
+```
+
+Day10 alert delivery demo:
+```bash
+./scripts/day10_alert_delivery_demo.sh
 ```

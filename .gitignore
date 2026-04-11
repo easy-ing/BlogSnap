@@ -6,3 +6,4 @@ __pycache__/
 generated_post.md
 cron.log
 .DS_Store
+tmp/

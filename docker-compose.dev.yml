@@ -68,11 +68,25 @@ services:
     image: prom/alertmanager:v0.28.0
     container_name: blogsnap-alertmanager
     restart: unless-stopped
+    depends_on:
+      alert-webhook:
+        condition: service_started
     ports:
       - "9093:9093"
     volumes:
       - ./monitoring/alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
     command: ["--config.file=/etc/alertmanager/alertmanager.yml"]
+
+  alert-webhook:
+    image: python:3.12-alpine
+    container_name: blogsnap-alert-webhook
+    restart: unless-stopped
+    ports:
+      - "5001:5001"
+    volumes:
+      - ./monitoring/alert_webhook/server.py:/app/server.py:ro
+      - ./tmp/alert-webhook:/data
+    command: ["python", "/app/server.py"]
 
   grafana:
     image: grafana/grafana:11.3.0
