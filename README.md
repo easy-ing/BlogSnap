@@ -267,3 +267,23 @@ docker compose -f docker-compose.dev.yml up -d postgres
 ```
 
 위 실행으로 Prometheus rules 로드, Alertmanager ready, Grafana datasource(provisioned)까지 확인합니다.
+
+## Day 10 진행 현황 (2026-04-11)
+- 실행 계획: [docs/day10-plan.md](/Users/jin/Desktop/easy_ing/BlogSnap/docs/day10-plan.md)
+- 알림 전달 webhook 수신기:
+  - [monitoring/alert_webhook/server.py](/Users/jin/Desktop/easy_ing/BlogSnap/monitoring/alert_webhook/server.py)
+- Alertmanager webhook 연결 업데이트:
+  - [monitoring/alertmanager/alertmanager.yml](/Users/jin/Desktop/easy_ing/BlogSnap/monitoring/alertmanager/alertmanager.yml)
+- compose 서비스 확장:
+  - [docker-compose.dev.yml](/Users/jin/Desktop/easy_ing/BlogSnap/docker-compose.dev.yml) (`alert-webhook` 추가)
+- 운영 대응 문서:
+  - [docs/day10-alert-runbook.md](/Users/jin/Desktop/easy_ing/BlogSnap/docs/day10-alert-runbook.md)
+- Day10 데모:
+  - [scripts/day10_alert_delivery_demo.sh](/Users/jin/Desktop/easy_ing/BlogSnap/scripts/day10_alert_delivery_demo.sh)
+
+### Day 10 실행
+```bash
+./scripts/day10_alert_delivery_demo.sh
+```
+
+위 실행으로 synthetic alert 전송 후 webhook 수신 로그 기록까지 검증합니다.
