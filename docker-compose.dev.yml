@@ -83,9 +83,23 @@ services:
     restart: unless-stopped
     ports:
       - "5001:5001"
+    environment:
+      ALERT_FORWARD_WEBHOOK_URL: ${ALERT_FORWARD_WEBHOOK_URL:-}
+      ALERT_FORWARD_TIMEOUT_SECONDS: ${ALERT_FORWARD_TIMEOUT_SECONDS:-5}
     volumes:
       - ./monitoring/alert_webhook/server.py:/app/server.py:ro
       - ./tmp/alert-webhook:/data
+    command: ["python", "/app/server.py"]
+
+  webhook-sink:
+    image: python:3.12-alpine
+    container_name: blogsnap-webhook-sink
+    restart: unless-stopped
+    ports:
+      - "5002:5002"
+    volumes:
+      - ./monitoring/mock_sink/server.py:/app/server.py:ro
+      - ./tmp/webhook-sink:/data
     command: ["python", "/app/server.py"]
 
   grafana:
