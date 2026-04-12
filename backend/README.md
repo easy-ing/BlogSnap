@@ -16,6 +16,8 @@ uvicorn backend.app.main:app --reload --port 8000
 - `GRAFANA_ADMIN_PASSWORD` (default `admin`)
 - `ALERT_WEBHOOK_PORT` (default `5001`, alert-webhook receiver)
 - `ALERT_WEBHOOK_LOG_PATH` (default `/data/alerts.jsonl`)
+- `ALERT_FORWARD_WEBHOOK_URL` (optional, Slack incoming webhook URL)
+- `ALERT_FORWARD_TIMEOUT_SECONDS` (default `5`)
 - `WORDPRESS_BASE_URL`, `WORDPRESS_USERNAME`, `WORDPRESS_APP_PASSWORD` (wordpress mode)
 - `WORKER_PUBLISH_DEFAULT_TAGS` (comma-separated)
 
@@ -70,4 +72,9 @@ Day9 observability+ demo:
 Day10 alert delivery demo:
 ```bash
 ./scripts/day10_alert_delivery_demo.sh
+```
+
+Day11 webhook relay demo:
+```bash
+./scripts/day11_webhook_relay_demo.sh
 ```

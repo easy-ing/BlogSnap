@@ -287,3 +287,24 @@ docker compose -f docker-compose.dev.yml up -d postgres
 ```
 
 위 실행으로 synthetic alert 전송 후 webhook 수신 로그 기록까지 검증합니다.
+
+## Day 11 진행 현황 (2026-04-12)
+- 실행 계획: [docs/day11-plan.md](/Users/jin/Desktop/easy_ing/BlogSnap/docs/day11-plan.md)
+- 웹훅 relay 확장:
+  - [monitoring/alert_webhook/server.py](/Users/jin/Desktop/easy_ing/BlogSnap/monitoring/alert_webhook/server.py) (`ALERT_FORWARD_WEBHOOK_URL` 지원)
+- mock sink (로컬 연동 검증):
+  - [monitoring/mock_sink/server.py](/Users/jin/Desktop/easy_ing/BlogSnap/monitoring/mock_sink/server.py)
+- compose 서비스 확장:
+  - [docker-compose.dev.yml](/Users/jin/Desktop/easy_ing/BlogSnap/docker-compose.dev.yml) (`webhook-sink` 추가)
+- Day11 데모:
+  - [scripts/day11_webhook_relay_demo.sh](/Users/jin/Desktop/easy_ing/BlogSnap/scripts/day11_webhook_relay_demo.sh)
+
+### Day 11 실행
+```bash
+./scripts/day11_webhook_relay_demo.sh
+```
+
+위 실행으로 Alertmanager synthetic alert가 alert-webhook을 거쳐 sink로 포워딩되는 것을 검증합니다.
+
+## Day11+ 남은 작업표
+- 상세 로드맵: [docs/day11-roadmap.md](/Users/jin/Desktop/easy_ing/BlogSnap/docs/day11-roadmap.md)
