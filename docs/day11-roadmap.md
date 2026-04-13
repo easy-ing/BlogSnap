@@ -4,9 +4,9 @@
 - Alertmanager 알림을 외부 웹훅(Slack 형식)으로 relay
 - 로컬 mock sink 기반 E2E 검증 스크립트 구성
 
-## Day 12 (예정)
+## Day 12 (완료)
 - 비밀정보 관리 체계 정리
-- `.env` 기반 민감값 로딩 검증 및 운영 체크리스트 작성
+- `.env` 기반 민감값 로딩 검증 스크립트 및 운영 체크리스트 작성
 - Alert routing 수준별 분리 (`warning`/`critical`)
 
 ## Day 13 (예정)

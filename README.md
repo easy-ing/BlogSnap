@@ -308,3 +308,26 @@ docker compose -f docker-compose.dev.yml up -d postgres
 
 ## Day11+ 남은 작업표
 - 상세 로드맵: [docs/day11-roadmap.md](/Users/jin/Desktop/easy_ing/BlogSnap/docs/day11-roadmap.md)
+
+## Day 12 진행 현황 (2026-04-13)
+- 실행 계획: [docs/day12-plan.md](/Users/jin/Desktop/easy_ing/BlogSnap/docs/day12-plan.md)
+- Alert routing 분리:
+  - [monitoring/alertmanager/alertmanager.yml](/Users/jin/Desktop/easy_ing/BlogSnap/monitoring/alertmanager/alertmanager.yml) (`warning`/`critical` receiver 분기)
+- webhook 채널별 포워딩:
+  - [monitoring/alert_webhook/server.py](/Users/jin/Desktop/easy_ing/BlogSnap/monitoring/alert_webhook/server.py)
+  - `ALERT_FORWARD_WEBHOOK_URL_WARNING`, `ALERT_FORWARD_WEBHOOK_URL_CRITICAL` 지원
+- 로컬 분리 검증 sink:
+  - [docker-compose.dev.yml](/Users/jin/Desktop/easy_ing/BlogSnap/docker-compose.dev.yml) (`webhook-sink-warning`, `webhook-sink-critical`)
+- Day12 데모/점검:
+  - [scripts/day12_alert_routing_demo.sh](/Users/jin/Desktop/easy_ing/BlogSnap/scripts/day12_alert_routing_demo.sh)
+  - [scripts/day12_env_check.sh](/Users/jin/Desktop/easy_ing/BlogSnap/scripts/day12_env_check.sh)
+- 시크릿 운영 체크리스트:
+  - [docs/day12-secrets-checklist.md](/Users/jin/Desktop/easy_ing/BlogSnap/docs/day12-secrets-checklist.md)
+
+### Day 12 실행
+```bash
+./scripts/day12_alert_routing_demo.sh
+./scripts/day12_env_check.sh
+```
+
+위 실행으로 warning/critical 라우팅 분리 전달과 `.env` 민감정보 점검을 확인합니다.

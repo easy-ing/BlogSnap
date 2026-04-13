@@ -85,6 +85,8 @@ services:
       - "5001:5001"
     environment:
       ALERT_FORWARD_WEBHOOK_URL: ${ALERT_FORWARD_WEBHOOK_URL:-}
+      ALERT_FORWARD_WEBHOOK_URL_WARNING: ${ALERT_FORWARD_WEBHOOK_URL_WARNING:-}
+      ALERT_FORWARD_WEBHOOK_URL_CRITICAL: ${ALERT_FORWARD_WEBHOOK_URL_CRITICAL:-}
       ALERT_FORWARD_TIMEOUT_SECONDS: ${ALERT_FORWARD_TIMEOUT_SECONDS:-5}
     volumes:
       - ./monitoring/alert_webhook/server.py:/app/server.py:ro
@@ -100,6 +102,28 @@ services:
     volumes:
       - ./monitoring/mock_sink/server.py:/app/server.py:ro
       - ./tmp/webhook-sink:/data
+    command: ["python", "/app/server.py"]
+
+  webhook-sink-warning:
+    image: python:3.12-alpine
+    container_name: blogsnap-webhook-sink-warning
+    restart: unless-stopped
+    ports:
+      - "5003:5002"
+    volumes:
+      - ./monitoring/mock_sink/server.py:/app/server.py:ro
+      - ./tmp/webhook-sink-warning:/data
+    command: ["python", "/app/server.py"]
+
+  webhook-sink-critical:
+    image: python:3.12-alpine
+    container_name: blogsnap-webhook-sink-critical
+    restart: unless-stopped
+    ports:
+      - "5004:5002"
+    volumes:
+      - ./monitoring/mock_sink/server.py:/app/server.py:ro
+      - ./tmp/webhook-sink-critical:/data
     command: ["python", "/app/server.py"]
 
   grafana:
