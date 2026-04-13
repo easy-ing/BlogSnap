@@ -14,6 +14,8 @@ PORT = int(os.getenv("ALERT_WEBHOOK_PORT", "5001"))
 LOG_PATH = Path(os.getenv("ALERT_WEBHOOK_LOG_PATH", "/data/alerts.jsonl"))
 FORWARD_LOG_PATH = Path(os.getenv("ALERT_FORWARD_LOG_PATH", "/data/forward.jsonl"))
 FORWARD_WEBHOOK_URL = os.getenv("ALERT_FORWARD_WEBHOOK_URL", "").strip()
+FORWARD_WEBHOOK_URL_WARNING = os.getenv("ALERT_FORWARD_WEBHOOK_URL_WARNING", "").strip()
+FORWARD_WEBHOOK_URL_CRITICAL = os.getenv("ALERT_FORWARD_WEBHOOK_URL_CRITICAL", "").strip()
 FORWARD_TIMEOUT_SECONDS = float(os.getenv("ALERT_FORWARD_TIMEOUT_SECONDS", "5"))
 LOG_PATH.parent.mkdir(parents=True, exist_ok=True)
 FORWARD_LOG_PATH.parent.mkdir(parents=True, exist_ok=True)
@@ -23,6 +25,12 @@ STATS: dict[str, int] = {
     "forward_attempt_total": 0,
     "forward_success_total": 0,
     "forward_failed_total": 0,
+    "forward_warning_success_total": 0,
+    "forward_warning_failed_total": 0,
+    "forward_critical_success_total": 0,
+    "forward_critical_failed_total": 0,
+    "forward_generic_success_total": 0,
+    "forward_generic_failed_total": 0,
 }
 
 
@@ -53,14 +61,23 @@ def _build_slack_text(payload: dict[str, object]) -> str:
     return "\n".join(lines)
 
 
-def _forward_to_webhook(payload: dict[str, object]) -> tuple[bool, str]:
-    if not FORWARD_WEBHOOK_URL:
+def _resolve_forward_url(channel: str) -> str:
+    if channel == "warning" and FORWARD_WEBHOOK_URL_WARNING:
+        return FORWARD_WEBHOOK_URL_WARNING
+    if channel == "critical" and FORWARD_WEBHOOK_URL_CRITICAL:
+        return FORWARD_WEBHOOK_URL_CRITICAL
+    return FORWARD_WEBHOOK_URL
+
+
+def _forward_to_webhook(payload: dict[str, object], channel: str) -> tuple[bool, str]:
+    forward_url = _resolve_forward_url(channel)
+    if not forward_url:
         return False, "forward url not configured"
 
     outbound = {"text": _build_slack_text(payload)}
     body = json.dumps(outbound).encode("utf-8")
     req = request.Request(
-        FORWARD_WEBHOOK_URL,
+        forward_url,
         data=body,
         method="POST",
         headers={"Content-Type": "application/json"},
@@ -88,7 +105,17 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_GET(self) -> None:  # noqa: N802
         if self.path in ("/", "/health", "/ready"):
-            self._send_json(200, {"status": "ok", "forward_configured": bool(FORWARD_WEBHOOK_URL)})
+            self._send_json(
+                200,
+                {
+                    "status": "ok",
+                    "forward_configured": bool(
+                        FORWARD_WEBHOOK_URL
+                        or FORWARD_WEBHOOK_URL_WARNING
+                        or FORWARD_WEBHOOK_URL_CRITICAL
+                    ),
+                },
+            )
             return
         if self.path == "/stats":
             self._send_json(200, {"status": "ok", "stats": STATS})
@@ -96,9 +123,15 @@ class Handler(BaseHTTPRequestHandler):
         self._send_json(404, {"error": "not found"})
 
     def do_POST(self) -> None:  # noqa: N802
-        if self.path != "/alerts":
+        if self.path not in ("/alerts", "/alerts/warning", "/alerts/critical"):
             self._send_json(404, {"error": "not found"})
             return
+
+        channel = "generic"
+        if self.path == "/alerts/warning":
+            channel = "warning"
+        elif self.path == "/alerts/critical":
+            channel = "critical"
 
         length = int(self.headers.get("Content-Length", "0"))
         raw = self.rfile.read(length)
@@ -112,22 +145,39 @@ class Handler(BaseHTTPRequestHandler):
         event = {
             "received_at": datetime.now(timezone.utc).isoformat(),
             "client": self.client_address[0],
+            "channel": channel,
             "payload": payload,
         }
         _append_jsonl(LOG_PATH, event)
 
-        forward_ok, message = _forward_to_webhook(payload)
-        if FORWARD_WEBHOOK_URL:
+        forward_ok, message = _forward_to_webhook(payload, channel)
+        if _resolve_forward_url(channel):
             STATS["forward_attempt_total"] += 1
             if forward_ok:
                 STATS["forward_success_total"] += 1
             else:
                 STATS["forward_failed_total"] += 1
+            if channel == "warning":
+                if forward_ok:
+                    STATS["forward_warning_success_total"] += 1
+                else:
+                    STATS["forward_warning_failed_total"] += 1
+            elif channel == "critical":
+                if forward_ok:
+                    STATS["forward_critical_success_total"] += 1
+                else:
+                    STATS["forward_critical_failed_total"] += 1
+            else:
+                if forward_ok:
+                    STATS["forward_generic_success_total"] += 1
+                else:
+                    STATS["forward_generic_failed_total"] += 1
 
             _append_jsonl(
                 FORWARD_LOG_PATH,
                 {
                     "received_at": event["received_at"],
+                    "channel": channel,
                     "forward_ok": forward_ok,
                     "message": message,
                 },
@@ -141,7 +191,7 @@ class Handler(BaseHTTPRequestHandler):
 
 def main() -> None:
     server = ThreadingHTTPServer((HOST, PORT), Handler)
-    has_forward = bool(FORWARD_WEBHOOK_URL)
+    has_forward = bool(FORWARD_WEBHOOK_URL or FORWARD_WEBHOOK_URL_WARNING or FORWARD_WEBHOOK_URL_CRITICAL)
     print(
         f"[alert-webhook] listening on {HOST}:{PORT}, log={LOG_PATH}, forward={has_forward}",
         flush=True,
