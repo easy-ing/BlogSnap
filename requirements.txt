@@ -10,3 +10,4 @@ psycopg[binary]>=3.2.3
 Markdown>=3.6
 streamlit>=1.37.0
 prometheus-client>=0.21.1
+pytest>=8.3.3

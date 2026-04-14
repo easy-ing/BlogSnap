@@ -90,3 +90,8 @@ Day12 env secrets check:
 ```bash
 ./scripts/day12_env_check.sh
 ```
+
+Day13 test suite:
+```bash
+./scripts/day13_test_suite.sh
+```
