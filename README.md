@@ -331,3 +331,21 @@ docker compose -f docker-compose.dev.yml up -d postgres
 ```
 
 위 실행으로 warning/critical 라우팅 분리 전달과 `.env` 민감정보 점검을 확인합니다.
+
+## Day 13 진행 현황 (2026-04-14)
+- 실행 계획: [docs/day13-plan.md](/Users/jin/Desktop/easy_ing/BlogSnap/docs/day13-plan.md)
+- 테스트 픽스처/케이스:
+  - [tests/conftest.py](/Users/jin/Desktop/easy_ing/BlogSnap/tests/conftest.py)
+  - [tests/test_api_flow.py](/Users/jin/Desktop/easy_ing/BlogSnap/tests/test_api_flow.py)
+  - [tests/test_job_runner_retry.py](/Users/jin/Desktop/easy_ing/BlogSnap/tests/test_job_runner_retry.py)
+- 테스트 전략 문서:
+  - [docs/day13-test-strategy.md](/Users/jin/Desktop/easy_ing/BlogSnap/docs/day13-test-strategy.md)
+- Day13 실행 스크립트:
+  - [scripts/day13_test_suite.sh](/Users/jin/Desktop/easy_ing/BlogSnap/scripts/day13_test_suite.sh)
+
+### Day 13 실행
+```bash
+./scripts/day13_test_suite.sh
+```
+
+위 실행으로 DB reset + pytest 통합/단위 테스트를 한 번에 검증합니다.
