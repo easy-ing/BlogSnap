@@ -95,3 +95,8 @@ Day13 test suite:
 ```bash
 ./scripts/day13_test_suite.sh
 ```
+
+Day14 CI-equivalent suite:
+```bash
+./scripts/day14_ci_suite.sh
+```

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 import subprocess
 from pathlib import Path
 
@@ -16,7 +17,9 @@ ROOT_DIR = Path(__file__).resolve().parents[1]
 
 @pytest.fixture(scope="session", autouse=True)
 def prepare_test_db() -> None:
-    subprocess.run([str(ROOT_DIR / "scripts/db_reset.sh")], check=True)
+    reset_mode = os.getenv("TEST_DB_RESET_MODE", "docker").strip().lower()
+    if reset_mode == "docker":
+        subprocess.run([str(ROOT_DIR / "scripts/db_reset.sh")], check=True)
 
 
 @pytest.fixture()

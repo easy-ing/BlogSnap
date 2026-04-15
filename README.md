@@ -349,3 +349,22 @@ docker compose -f docker-compose.dev.yml up -d postgres
 ```
 
 위 실행으로 DB reset + pytest 통합/단위 테스트를 한 번에 검증합니다.
+
+## Day 14 진행 현황 (2026-04-15)
+- 실행 계획: [docs/day14-plan.md](/Users/jin/Desktop/easy_ing/BlogSnap/docs/day14-plan.md)
+- GitHub Actions CI:
+  - [.github/workflows/ci.yml](/Users/jin/Desktop/easy_ing/BlogSnap/.github/workflows/ci.yml)
+- CI 재현 스크립트:
+  - [scripts/day14_ci_suite.sh](/Users/jin/Desktop/easy_ing/BlogSnap/scripts/day14_ci_suite.sh)
+- CI 디버깅 가이드:
+  - [docs/day14-ci-debug-guide.md](/Users/jin/Desktop/easy_ing/BlogSnap/docs/day14-ci-debug-guide.md)
+- 테스트 픽스처 CI 호환:
+  - [tests/conftest.py](/Users/jin/Desktop/easy_ing/BlogSnap/tests/conftest.py) (`TEST_DB_RESET_MODE=skip`)
+
+### Day 14 실행
+```bash
+docker compose -f docker-compose.dev.yml up -d postgres
+./scripts/day14_ci_suite.sh
+```
+
+위 실행으로 lint/test/compile/check를 CI와 동일한 순서로 검증합니다.
