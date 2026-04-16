@@ -368,3 +368,21 @@ docker compose -f docker-compose.dev.yml up -d postgres
 ```
 
 위 실행으로 lint/test/compile/check를 CI와 동일한 순서로 검증합니다.
+
+## Day 15 진행 현황 (2026-04-16)
+- 실행 계획: [docs/day15-plan.md](/Users/jin/Desktop/easy_ing/BlogSnap/docs/day15-plan.md)
+- 릴리즈 체크리스트:
+  - [docs/day15-release-checklist.md](/Users/jin/Desktop/easy_ing/BlogSnap/docs/day15-release-checklist.md)
+- 운영 핸드북(배포/롤백/장애 대응):
+  - [docs/day15-operations-handbook.md](/Users/jin/Desktop/easy_ing/BlogSnap/docs/day15-operations-handbook.md)
+- MVP 종료 기준 + v1 백로그:
+  - [docs/day15-v1-backlog.md](/Users/jin/Desktop/easy_ing/BlogSnap/docs/day15-v1-backlog.md)
+- Day15 릴리즈 점검 스크립트:
+  - [scripts/day15_release_readiness.sh](/Users/jin/Desktop/easy_ing/BlogSnap/scripts/day15_release_readiness.sh)
+
+### Day 15 실행
+```bash
+./scripts/day15_release_readiness.sh
+```
+
+위 실행으로 CI 품질 게이트 + 릴리즈 문서/환경 점검을 함께 확인합니다.

@@ -100,3 +100,8 @@ Day14 CI-equivalent suite:
 ```bash
 ./scripts/day14_ci_suite.sh
 ```
+
+Day15 release readiness check:
+```bash
+./scripts/day15_release_readiness.sh
+```
