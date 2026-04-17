@@ -379,10 +379,12 @@ docker compose -f docker-compose.dev.yml up -d postgres
   - [docs/day15-v1-backlog.md](/Users/jin/Desktop/easy_ing/BlogSnap/docs/day15-v1-backlog.md)
 - Day15 릴리즈 점검 스크립트:
   - [scripts/day15_release_readiness.sh](/Users/jin/Desktop/easy_ing/BlogSnap/scripts/day15_release_readiness.sh)
+  - [scripts/day15_go_live_check.sh](/Users/jin/Desktop/easy_ing/BlogSnap/scripts/day15_go_live_check.sh) (원샷 점검)
 
 ### Day 15 실행
 ```bash
 ./scripts/day15_release_readiness.sh
+./scripts/day15_go_live_check.sh .env
 ```
 
 위 실행으로 CI 품질 게이트 + 릴리즈 문서/환경 점검을 함께 확인합니다.

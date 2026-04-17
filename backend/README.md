@@ -104,4 +104,5 @@ Day14 CI-equivalent suite:
 Day15 release readiness check:
 ```bash
 ./scripts/day15_release_readiness.sh
+./scripts/day15_go_live_check.sh .env
 ```
