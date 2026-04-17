@@ -43,51 +43,61 @@ done
 
 starts_at="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
 ends_at="$(date -u -v+15M +"%Y-%m-%dT%H:%M:%SZ" 2>/dev/null || date -u -d "+15 minutes" +"%Y-%m-%dT%H:%M:%SZ")"
+suffix="$(date +%s)"
+warning_alert_name="Day12WarningSynthetic-${suffix}"
+critical_alert_name="Day12CriticalSynthetic-${suffix}"
 
 echo "[INFO] Send warning + critical synthetic alerts"
-curl -fsS -X POST http://127.0.0.1:9093/api/v2/alerts \
-  -H "Content-Type: application/json" \
-  -d "[
-    {
-      \"labels\": {
-        \"alertname\": \"Day12WarningSynthetic\",
-        \"service\": \"api\",
-        \"severity\": \"warning\"
+for attempt in {1..3}; do
+  curl -fsS -X POST http://127.0.0.1:9093/api/v2/alerts \
+    -H "Content-Type: application/json" \
+    -d "[
+      {
+        \"labels\": {
+          \"alertname\": \"${warning_alert_name}\",
+          \"service\": \"api\",
+          \"severity\": \"warning\"
+        },
+        \"annotations\": {
+          \"summary\": \"Day12 warning route test\"
+        },
+        \"startsAt\": \"${starts_at}\",
+        \"endsAt\": \"${ends_at}\"
       },
-      \"annotations\": {
-        \"summary\": \"Day12 warning route test\"
-      },
-      \"startsAt\": \"${starts_at}\",
-      \"endsAt\": \"${ends_at}\"
-    },
-    {
-      \"labels\": {
-        \"alertname\": \"Day12CriticalSynthetic\",
-        \"service\": \"worker\",
-        \"severity\": \"critical\"
-      },
-      \"annotations\": {
-        \"summary\": \"Day12 critical route test\"
-      },
-      \"startsAt\": \"${starts_at}\",
-      \"endsAt\": \"${ends_at}\"
-    }
-  ]" >/dev/null
+      {
+        \"labels\": {
+          \"alertname\": \"${critical_alert_name}\",
+          \"service\": \"worker\",
+          \"severity\": \"critical\"
+        },
+        \"annotations\": {
+          \"summary\": \"Day12 critical route test\"
+        },
+        \"startsAt\": \"${starts_at}\",
+        \"endsAt\": \"${ends_at}\"
+      }
+    ]" >/dev/null
 
-echo "[INFO] Wait for routed delivery"
-for _ in {1..40}; do
-  if rg -q "Day12WarningSynthetic" "$WARN_SINK_LOG" && rg -q "Day12CriticalSynthetic" "$CRIT_SINK_LOG"; then
+  echo "[INFO] Wait for routed delivery (attempt=$attempt)"
+  delivered="no"
+  for _ in {1..25}; do
+    if rg -q "$warning_alert_name" "$WARN_SINK_LOG" && rg -q "$critical_alert_name" "$CRIT_SINK_LOG"; then
+      delivered="yes"
+      break
+    fi
+    sleep 1
+  done
+  if [[ "$delivered" == "yes" ]]; then
     break
   fi
-  sleep 1
 done
 
-if ! rg -q "Day12WarningSynthetic" "$WARN_SINK_LOG"; then
+if ! rg -q "$warning_alert_name" "$WARN_SINK_LOG"; then
   echo "[ERROR] warning alert did not reach warning sink"
   docker compose -f docker-compose.dev.yml logs --tail=120 alertmanager alert-webhook webhook-sink-warning || true
   exit 1
 fi
-if ! rg -q "Day12CriticalSynthetic" "$CRIT_SINK_LOG"; then
+if ! rg -q "$critical_alert_name" "$CRIT_SINK_LOG"; then
   echo "[ERROR] critical alert did not reach critical sink"
   docker compose -f docker-compose.dev.yml logs --tail=120 alertmanager alert-webhook webhook-sink-critical || true
   exit 1
