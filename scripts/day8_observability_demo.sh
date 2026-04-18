@@ -20,11 +20,19 @@ for _ in {1..60}; do
   sleep 1
 done
 
+LOGIN_JSON=$(curl -fsS -X POST http://127.0.0.1:8000/v1/auth/login \
+  -H 'Content-Type: application/json' \
+  -d '{"email":"day8-demo@blogsnap.local","display_name":"Day8 Demo"}')
+TOKEN=$(echo "$LOGIN_JSON" | python3 -c 'import sys,json; print(json.load(sys.stdin)["access_token"])')
+AUTH_HEADER="Authorization: Bearer $TOKEN"
+PROJECT_JSON=$(curl -fsS -X POST http://127.0.0.1:8000/v1/projects -H "$AUTH_HEADER" -H 'Content-Type: application/json' -d '{"name":"Day8 Metrics Project"}')
+PROJECT_ID=$(echo "$PROJECT_JSON" | python3 -c 'import sys,json; print(json.load(sys.stdin)["id"])')
+
 # generate some traffic
 for _ in {1..5}; do
   curl -fsS http://127.0.0.1:8000/health >/dev/null
   curl -fsS http://127.0.0.1:8000/health/ready >/dev/null
-  curl -fsS http://127.0.0.1:8000/v1/jobs/queue-summary >/dev/null
+  curl -fsS "http://127.0.0.1:8000/v1/jobs/queue-summary?project_id=${PROJECT_ID}" -H "$AUTH_HEADER" >/dev/null
   sleep 0.2
 done
 

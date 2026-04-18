@@ -28,3 +28,8 @@
 - 실채널 연동(Slack/PagerDuty 이벤트 경로) 보강
 - dedup/silence 정책 추가
 - 알림 억제(inhibit) 규칙 및 Day16 검증 스크립트 추가
+
+## Day 17 (완료)
+- 인증(로그인/토큰) 추가
+- 프로젝트 단위 접근제어(RBAC 최소형) 적용
+- Day17 auth/rbac 검증 스크립트 추가

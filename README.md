@@ -406,3 +406,24 @@ docker compose -f docker-compose.dev.yml up -d postgres
 ```
 
 위 실행으로 warning은 webhook 채널, critical은 PagerDuty 이벤트 경로로 전달되고 중복 critical 알림이 silence window로 억제되는지 확인합니다.
+
+## Day 17 진행 현황 (2026-04-19)
+- 실행 계획: [docs/day17-plan.md](/Users/jin/Desktop/easy_ing/BlogSnap/docs/day17-plan.md)
+- 인증/권한 코어:
+  - [backend/app/core/auth.py](/Users/jin/Desktop/easy_ing/BlogSnap/backend/app/core/auth.py)
+- auth/project API:
+  - [backend/app/api/auth.py](/Users/jin/Desktop/easy_ing/BlogSnap/backend/app/api/auth.py)
+  - [backend/app/api/projects.py](/Users/jin/Desktop/easy_ing/BlogSnap/backend/app/api/projects.py)
+- 권한 적용 API:
+  - [backend/app/api/drafts.py](/Users/jin/Desktop/easy_ing/BlogSnap/backend/app/api/drafts.py)
+  - [backend/app/api/publish.py](/Users/jin/Desktop/easy_ing/BlogSnap/backend/app/api/publish.py)
+  - [backend/app/api/jobs.py](/Users/jin/Desktop/easy_ing/BlogSnap/backend/app/api/jobs.py)
+- Day17 데모:
+  - [scripts/day17_auth_rbac_demo.sh](/Users/jin/Desktop/easy_ing/BlogSnap/scripts/day17_auth_rbac_demo.sh)
+
+### Day 17 실행
+```bash
+./scripts/day17_auth_rbac_demo.sh
+```
+
+위 실행으로 owner 접근 허용, 타 사용자 cross-access 403 차단을 확인합니다.
