@@ -13,6 +13,8 @@ uvicorn backend.app.main:app --reload --port 8000
 - `WORKER_BATCH_SIZE` (jobs per poll)
 - `LOG_LEVEL` (`INFO`, `DEBUG`, ...)
 - `PROMETHEUS_ENABLED` (`true`/`false`)
+- `AUTH_SECRET_KEY` (token signing key)
+- `AUTH_TOKEN_EXP_MINUTES` (token expiration minutes)
 - `GRAFANA_ADMIN_PASSWORD` (default `admin`)
 - `ALERT_WEBHOOK_PORT` (default `5001`, alert-webhook receiver)
 - `ALERT_WEBHOOK_LOG_PATH` (default `/data/alerts.jsonl`)
@@ -34,6 +36,10 @@ uvicorn backend.app.main:app --reload --port 8000
 - `GET /health`
 - `GET /health/ready`
 - `GET /health/metrics`
+- `POST /v1/auth/login`
+- `GET /v1/auth/me`
+- `POST /v1/projects`
+- `GET /v1/projects`
 - `POST /v1/drafts/generate`
 - `GET /v1/drafts?project_id=...`
 - `POST /v1/drafts/{draft_id}/regenerate`
@@ -42,9 +48,9 @@ uvicorn backend.app.main:app --reload --port 8000
 - `GET /v1/publish/{publish_job_id}`
 - `GET /v1/jobs/{job_id}`
 - `POST /v1/jobs/{job_id}/run`
-- `POST /v1/jobs/run-next`
-- `POST /v1/jobs/run-batch?limit=10`
-- `GET /v1/jobs/queue-summary`
+- `POST /v1/jobs/run-next?project_id=...`
+- `POST /v1/jobs/run-batch?project_id=...&limit=10`
+- `GET /v1/jobs/queue-summary?project_id=...`
 
 ## Worker
 Run next pending/retrying job once:
@@ -117,4 +123,9 @@ Day15 release readiness check:
 Day16 real-channel relay demo:
 ```bash
 ./scripts/day16_real_channel_demo.sh
+```
+
+Day17 auth/rbac demo:
+```bash
+./scripts/day17_auth_rbac_demo.sh
 ```

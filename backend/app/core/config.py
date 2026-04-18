@@ -15,6 +15,8 @@ class Settings(BaseSettings):
     wordpress_username: str = ""
     wordpress_app_password: str = ""
     worker_publish_default_tags: str = "자동화,AI,블로그"
+    auth_secret_key: str = "change-me-dev-secret"
+    auth_token_exp_minutes: int = 120
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 

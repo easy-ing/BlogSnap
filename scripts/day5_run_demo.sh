@@ -34,19 +34,26 @@ API_PID=$!
 trap 'kill $API_PID >/dev/null 2>&1 || true' EXIT
 sleep 2
 
+# auth login (same seeded user ownership)
+LOGIN_JSON=$(curl -sS -X POST http://127.0.0.1:8000/v1/auth/login \
+  -H 'Content-Type: application/json' \
+  -d '{"email":"day4-demo@blogsnap.local","display_name":"Day4 Demo"}')
+TOKEN=$(echo "$LOGIN_JSON" | python3 -c 'import sys,json; print(json.load(sys.stdin)["access_token"])')
+AUTH_HEADER="Authorization: Bearer $TOKEN"
+
 # 4) Select draft
-curl -sS -X POST "http://127.0.0.1:8000/v1/drafts/$DRAFT_ID/select" >/tmp/day5_select.json
+curl -sS -X POST "http://127.0.0.1:8000/v1/drafts/$DRAFT_ID/select" -H "$AUTH_HEADER" >/tmp/day5_select.json
 
 # 5) Create publish job
 PAYLOAD=$(cat <<JSON
 {"project_id":"$PROJECT_ID","draft_id":"$DRAFT_ID","provider":"wordpress","idempotency_key":"day5-demo-$(date +%s)"}
 JSON
 )
-PUBLISH_JOB=$(curl -sS -X POST http://127.0.0.1:8000/v1/publish -H 'Content-Type: application/json' -d "$PAYLOAD")
+PUBLISH_JOB=$(curl -sS -X POST http://127.0.0.1:8000/v1/publish -H 'Content-Type: application/json' -H "$AUTH_HEADER" -d "$PAYLOAD")
 JOB_ID=$(echo "$PUBLISH_JOB" | python3 -c 'import sys,json; print(json.load(sys.stdin)["id"])')
 
 # 6) Run publish job now
-RUN_RESULT=$(curl -sS -X POST "http://127.0.0.1:8000/v1/jobs/$JOB_ID/run")
+RUN_RESULT=$(curl -sS -X POST "http://127.0.0.1:8000/v1/jobs/$JOB_ID/run" -H "$AUTH_HEADER")
 PUBLISH_ID=$(echo "$RUN_RESULT" | python3 -c 'import sys,json; d=json.load(sys.stdin); print(d.get("result_payload",{}).get("publish_job_id",""))')
 
 if [[ -z "${PUBLISH_ID:-}" ]]; then
@@ -56,7 +63,7 @@ if [[ -z "${PUBLISH_ID:-}" ]]; then
 fi
 
 # 7) Fetch publish result
-PUBLISH_RESULT=$(curl -sS "http://127.0.0.1:8000/v1/publish/$PUBLISH_ID")
+PUBLISH_RESULT=$(curl -sS "http://127.0.0.1:8000/v1/publish/$PUBLISH_ID" -H "$AUTH_HEADER")
 
 echo "[OK] Publish flow completed"
 echo "--- select draft ---"
