@@ -88,6 +88,13 @@ services:
       ALERT_FORWARD_WEBHOOK_URL_WARNING: ${ALERT_FORWARD_WEBHOOK_URL_WARNING:-}
       ALERT_FORWARD_WEBHOOK_URL_CRITICAL: ${ALERT_FORWARD_WEBHOOK_URL_CRITICAL:-}
       ALERT_FORWARD_TIMEOUT_SECONDS: ${ALERT_FORWARD_TIMEOUT_SECONDS:-5}
+      ALERT_PAGERDUTY_EVENTS_URL: ${ALERT_PAGERDUTY_EVENTS_URL:-https://events.pagerduty.com/v2/enqueue}
+      ALERT_PAGERDUTY_ROUTING_KEY: ${ALERT_PAGERDUTY_ROUTING_KEY:-}
+      ALERT_PAGERDUTY_ENABLED_CHANNELS: ${ALERT_PAGERDUTY_ENABLED_CHANNELS:-critical}
+      ALERT_SILENCE_WINDOW_SECONDS: ${ALERT_SILENCE_WINDOW_SECONDS:-90}
+      ALERT_SILENCE_WINDOW_WARNING_SECONDS: ${ALERT_SILENCE_WINDOW_WARNING_SECONDS:-90}
+      ALERT_SILENCE_WINDOW_CRITICAL_SECONDS: ${ALERT_SILENCE_WINDOW_CRITICAL_SECONDS:-90}
+      ALERT_SILENCE_WINDOW_GENERIC_SECONDS: ${ALERT_SILENCE_WINDOW_GENERIC_SECONDS:-90}
     volumes:
       - ./monitoring/alert_webhook/server.py:/app/server.py:ro
       - ./tmp/alert-webhook:/data
@@ -124,6 +131,17 @@ services:
     volumes:
       - ./monitoring/mock_sink/server.py:/app/server.py:ro
       - ./tmp/webhook-sink-critical:/data
+    command: ["python", "/app/server.py"]
+
+  pagerduty-sink:
+    image: python:3.12-alpine
+    container_name: blogsnap-pagerduty-sink
+    restart: unless-stopped
+    ports:
+      - "5005:5005"
+    volumes:
+      - ./monitoring/mock_pagerduty/server.py:/app/server.py:ro
+      - ./tmp/pagerduty-sink:/data
     command: ["python", "/app/server.py"]
 
   grafana:

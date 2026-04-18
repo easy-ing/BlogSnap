@@ -20,6 +20,13 @@ uvicorn backend.app.main:app --reload --port 8000
 - `ALERT_FORWARD_WEBHOOK_URL_WARNING` (optional, warning channel URL)
 - `ALERT_FORWARD_WEBHOOK_URL_CRITICAL` (optional, critical channel URL)
 - `ALERT_FORWARD_TIMEOUT_SECONDS` (default `5`)
+- `ALERT_PAGERDUTY_EVENTS_URL` (default PagerDuty Events v2 endpoint)
+- `ALERT_PAGERDUTY_ROUTING_KEY` (optional, PagerDuty routing key)
+- `ALERT_PAGERDUTY_ENABLED_CHANNELS` (default `critical`)
+- `ALERT_SILENCE_WINDOW_SECONDS` (dedup/silence default window)
+- `ALERT_SILENCE_WINDOW_WARNING_SECONDS`
+- `ALERT_SILENCE_WINDOW_CRITICAL_SECONDS`
+- `ALERT_SILENCE_WINDOW_GENERIC_SECONDS`
 - `WORDPRESS_BASE_URL`, `WORDPRESS_USERNAME`, `WORDPRESS_APP_PASSWORD` (wordpress mode)
 - `WORKER_PUBLISH_DEFAULT_TAGS` (comma-separated)
 
@@ -105,4 +112,9 @@ Day15 release readiness check:
 ```bash
 ./scripts/day15_release_readiness.sh
 ./scripts/day15_go_live_check.sh .env
+```
+
+Day16 real-channel relay demo:
+```bash
+./scripts/day16_real_channel_demo.sh
 ```

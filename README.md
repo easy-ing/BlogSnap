@@ -388,3 +388,21 @@ docker compose -f docker-compose.dev.yml up -d postgres
 ```
 
 위 실행으로 CI 품질 게이트 + 릴리즈 문서/환경 점검을 함께 확인합니다.
+
+## Day 16 진행 현황 (2026-04-18)
+- 실행 계획: [docs/day16-plan.md](/Users/jin/Desktop/easy_ing/BlogSnap/docs/day16-plan.md)
+- 실채널 relay + dedup/silence:
+  - [monitoring/alert_webhook/server.py](/Users/jin/Desktop/easy_ing/BlogSnap/monitoring/alert_webhook/server.py)
+- Alertmanager 억제 규칙(inhibit):
+  - [monitoring/alertmanager/alertmanager.yml](/Users/jin/Desktop/easy_ing/BlogSnap/monitoring/alertmanager/alertmanager.yml)
+- mock PagerDuty sink:
+  - [monitoring/mock_pagerduty/server.py](/Users/jin/Desktop/easy_ing/BlogSnap/monitoring/mock_pagerduty/server.py)
+- Day16 데모:
+  - [scripts/day16_real_channel_demo.sh](/Users/jin/Desktop/easy_ing/BlogSnap/scripts/day16_real_channel_demo.sh)
+
+### Day 16 실행
+```bash
+./scripts/day16_real_channel_demo.sh
+```
+
+위 실행으로 warning은 webhook 채널, critical은 PagerDuty 이벤트 경로로 전달되고 중복 critical 알림이 silence window로 억제되는지 확인합니다.
