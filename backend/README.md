@@ -129,3 +129,8 @@ Day17 auth/rbac demo:
 ```bash
 ./scripts/day17_auth_rbac_demo.sh
 ```
+
+Day18 scheduled publish demo:
+```bash
+./scripts/day18_scheduled_publish_demo.sh
+```
