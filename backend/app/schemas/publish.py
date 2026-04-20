@@ -1,4 +1,5 @@
 from uuid import UUID
+from datetime import datetime
 from typing import Optional
 
 from pydantic import BaseModel
@@ -11,6 +12,7 @@ class PublishRequest(BaseModel):
     draft_id: UUID
     provider: ProviderType = ProviderType.wordpress
     idempotency_key: Optional[str] = None
+    publish_at: Optional[datetime] = None
 
 
 class PublishResponse(BaseModel):
@@ -19,6 +21,7 @@ class PublishResponse(BaseModel):
     draft_id: UUID
     status: PublishStatus
     post_url: Optional[str]
+    request_snapshot: dict
 
     class Config:
         from_attributes = True

@@ -427,3 +427,21 @@ docker compose -f docker-compose.dev.yml up -d postgres
 ```
 
 위 실행으로 owner 접근 허용, 타 사용자 cross-access 403 차단을 확인합니다.
+
+## Day 18 진행 현황 (2026-04-21)
+- 실행 계획: [docs/day18-plan.md](/Users/jin/Desktop/easy_ing/BlogSnap/docs/day18-plan.md)
+- 예약 발행 스키마/생성 로직:
+  - [backend/app/schemas/publish.py](/Users/jin/Desktop/easy_ing/BlogSnap/backend/app/schemas/publish.py)
+  - [backend/app/api/publish.py](/Users/jin/Desktop/easy_ing/BlogSnap/backend/app/api/publish.py)
+- 예약 시간 우회 방지 실행 가드:
+  - [backend/app/worker/runner.py](/Users/jin/Desktop/easy_ing/BlogSnap/backend/app/worker/runner.py)
+- Day18 데모/테스트:
+  - [scripts/day18_scheduled_publish_demo.sh](/Users/jin/Desktop/easy_ing/BlogSnap/scripts/day18_scheduled_publish_demo.sh)
+  - [tests/test_scheduled_publish.py](/Users/jin/Desktop/easy_ing/BlogSnap/tests/test_scheduled_publish.py)
+
+### Day 18 실행
+```bash
+./scripts/day18_scheduled_publish_demo.sh
+```
+
+위 실행으로 예약 시간 전 `RETRYING` 유지, 예약 시각 도달 후 `SUCCEEDED/PUBLISHED` 전이를 확인합니다.

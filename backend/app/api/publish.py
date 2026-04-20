@@ -1,3 +1,5 @@
+from datetime import datetime, timezone
+from typing import Optional
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -13,6 +15,14 @@ from backend.app.schemas.publish import PublishRequest, PublishResponse
 
 
 router = APIRouter(prefix="/v1/publish", tags=["publish"])
+
+
+def _normalize_publish_at(value: Optional[datetime]) -> Optional[datetime]:
+    if value is None:
+        return None
+    if value.tzinfo is None:
+        return value.replace(tzinfo=timezone.utc)
+    return value.astimezone(timezone.utc)
 
 
 @router.post("", response_model=JobResponse)
@@ -40,12 +50,21 @@ def create_publish_job(
         if existing:
             return existing
 
+    publish_at = _normalize_publish_at(payload.publish_at)
+    now = datetime.now(timezone.utc)
+    initial_status = JobStatus.PENDING
+    next_retry_at = None
+    if publish_at and publish_at > now:
+        initial_status = JobStatus.RETRYING
+        next_retry_at = publish_at
+
     job = Job(
         project_id=payload.project_id,
         type=JobType.publish,
-        status=JobStatus.PENDING,
+        status=initial_status,
         idempotency_key=payload.idempotency_key,
         request_payload=payload.model_dump(mode="json"),
+        next_retry_at=next_retry_at,
     )
     db.add(job)
     db.flush()

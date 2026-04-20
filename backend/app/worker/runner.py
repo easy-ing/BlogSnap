@@ -47,8 +47,11 @@ class JobRunner:
         if job.status not in (JobStatus.PENDING, JobStatus.RETRYING, JobStatus.RUNNING):
             return job
 
+        now = datetime.now(timezone.utc)
+        if job.status == JobStatus.RETRYING and job.next_retry_at and job.next_retry_at > now:
+            return job
+
         if job.status != JobStatus.RUNNING:
-            now = datetime.now(timezone.utc)
             job.status = JobStatus.RUNNING
             job.attempt_count = (job.attempt_count or 0) + 1
             job.started_at = now
