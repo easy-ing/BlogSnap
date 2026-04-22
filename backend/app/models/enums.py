@@ -35,3 +35,4 @@ class PublishStatus(str, Enum):
 
 class ProviderType(str, Enum):
     wordpress = "wordpress"
+    tistory = "tistory"

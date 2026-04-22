@@ -63,12 +63,13 @@ cp .env.example .env
 - `OPENAI_API_KEY`
 - `OPENAI_MODEL` (예: `gpt-5-mini`)
 - `DATABASE_URL` (예: `postgresql+psycopg://blogsnap:blogsnap@localhost:55432/blogsnap`)
-- `WORKER_PUBLISH_MODE` (`mock` 또는 `wordpress`)
+- `WORKER_PUBLISH_MODE` (`mock` / `wordpress` / `tistory` / `live`)
 - `WORKER_POLL_SECONDS`, `WORKER_BATCH_SIZE`
 - `LOG_LEVEL`
 - `PROMETHEUS_ENABLED`
 - `GRAFANA_ADMIN_PASSWORD`
-- `WORDPRESS_BASE_URL`, `WORDPRESS_USERNAME`, `WORDPRESS_APP_PASSWORD` (wordpress 모드 시)
+- `WORDPRESS_BASE_URL`, `WORDPRESS_USERNAME`, `WORDPRESS_APP_PASSWORD` (wordpress/live 모드 시)
+- `TISTORY_API_URL`, `TISTORY_ACCESS_TOKEN`, `TISTORY_BLOG_NAME` (tistory/live 모드 시)
 - `BLOG_PROVIDER=wordpress`
 - `BLOG_BASE_URL`
 - `BLOG_USERNAME`
@@ -445,3 +446,24 @@ docker compose -f docker-compose.dev.yml up -d postgres
 ```
 
 위 실행으로 예약 시간 전 `RETRYING` 유지, 예약 시각 도달 후 `SUCCEEDED/PUBLISHED` 전이를 확인합니다.
+
+## Day 19 진행 현황 (2026-04-22)
+- 실행 계획: [docs/day19-plan.md](/Users/jin/Desktop/easy_ing/BlogSnap/docs/day19-plan.md)
+- 멀티 프로바이더 확장:
+  - [backend/app/models/enums.py](/Users/jin/Desktop/easy_ing/BlogSnap/backend/app/models/enums.py) (`tistory` provider 추가)
+  - [db/migrations/0001_init.sql](/Users/jin/Desktop/easy_ing/BlogSnap/db/migrations/0001_init.sql) (`provider_type` enum 확장)
+- 발행 실행 분기 확장:
+  - [backend/app/worker/executor.py](/Users/jin/Desktop/easy_ing/BlogSnap/backend/app/worker/executor.py) (`mock/wordpress/tistory/live` 지원)
+  - [backend/app/worker/publishers.py](/Users/jin/Desktop/easy_ing/BlogSnap/backend/app/worker/publishers.py) (`publish_to_tistory` 추가)
+- 환경/검증/데모:
+  - [scripts/day12_env_check.sh](/Users/jin/Desktop/easy_ing/BlogSnap/scripts/day12_env_check.sh) (tistory/live 점검 추가)
+  - [scripts/day19_multi_provider_demo.sh](/Users/jin/Desktop/easy_ing/BlogSnap/scripts/day19_multi_provider_demo.sh)
+- 테스트:
+  - [tests/test_multi_provider_publish.py](/Users/jin/Desktop/easy_ing/BlogSnap/tests/test_multi_provider_publish.py)
+
+### Day 19 실행
+```bash
+./scripts/day19_multi_provider_demo.sh
+```
+
+위 실행으로 동일 초고에 대해 `wordpress`와 `tistory` 발행 Job이 각각 독립 처리되고, mock URL에 provider 경로가 반영되는지 확인합니다.

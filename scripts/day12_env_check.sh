@@ -50,6 +50,40 @@ if [[ "$publish_mode" == "wordpress" ]]; then
   done
 fi
 
+if [[ "$publish_mode" == "tistory" ]]; then
+  for key in TISTORY_API_URL TISTORY_ACCESS_TOKEN TISTORY_BLOG_NAME; do
+    require_key "$key"
+    value="$(read_key "$key" || true)"
+    if [[ -z "$value" || "$value" == *"tistory.com"* || "$value" == *"your_"* ]]; then
+      echo "[WARN] ${key} looks like placeholder"
+      warn=1
+    fi
+  done
+fi
+
+if [[ "$publish_mode" == "live" ]]; then
+  wp_ok=1
+  ti_ok=1
+  for key in WORDPRESS_BASE_URL WORDPRESS_USERNAME WORDPRESS_APP_PASSWORD; do
+    value="$(read_key "$key" || true)"
+    if [[ -z "$value" || "$value" == *"yourblog.com"* || "$value" == *"your_username"* || "$value" == *"xxxx"* ]]; then
+      wp_ok=0
+      break
+    fi
+  done
+  for key in TISTORY_API_URL TISTORY_ACCESS_TOKEN TISTORY_BLOG_NAME; do
+    value="$(read_key "$key" || true)"
+    if [[ -z "$value" || "$value" == *"tistory.com"* || "$value" == *"your_"* ]]; then
+      ti_ok=0
+      break
+    fi
+  done
+  if [[ "$wp_ok" -eq 0 && "$ti_ok" -eq 0 ]]; then
+    echo "[WARN] WORKER_PUBLISH_MODE=live but no complete provider credentials found"
+    warn=1
+  fi
+fi
+
 warn_url="$(read_key ALERT_FORWARD_WEBHOOK_URL_WARNING || true)"
 crit_url="$(read_key ALERT_FORWARD_WEBHOOK_URL_CRITICAL || true)"
 generic_url="$(read_key ALERT_FORWARD_WEBHOOK_URL || true)"

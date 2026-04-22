@@ -38,3 +38,8 @@
 - 예약 발행(`publish_at`) 추가
 - 예약 시간 전 수동 실행 우회 방지
 - Day18 예약 발행 데모/테스트 추가
+
+## Day 19 (완료)
+- 멀티 프로바이더 발행(`wordpress`, `tistory`) 확장
+- worker publish 모드 확장(`mock`/`wordpress`/`tistory`/`live`)
+- Day19 멀티 프로바이더 데모/테스트 추가
