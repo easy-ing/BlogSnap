@@ -6,8 +6,8 @@ from sqlalchemy.orm import Session
 
 from backend.app.core.config import settings
 from backend.app.models.entities import Draft, Job, PublishJob
-from backend.app.models.enums import DraftStatus, JobType, PublishStatus
-from backend.app.worker.publishers import publish_to_wordpress
+from backend.app.models.enums import DraftStatus, JobType, ProviderType, PublishStatus
+from backend.app.worker.publishers import publish_to_tistory, publish_to_wordpress
 
 
 def _next_version_no(db: Session, project_id: uuid.UUID) -> int:
@@ -81,17 +81,22 @@ def _execute_publish_job(db: Session, job: Job) -> dict:
         raise ValueError("Draft not found for publish job")
 
     mode = settings.worker_publish_mode.strip().lower()
+    provider = publish_job.provider
+    tags = [t.strip() for t in settings.worker_publish_default_tags.split(",") if t.strip()]
+
     if mode == "mock":
         publish_job.status = PublishStatus.PUBLISHED
         publish_job.external_post_id = str(publish_job.id)
-        publish_job.post_url = f"{settings.worker_mock_publish_base_url}/{publish_job.id}"
+        publish_job.post_url = f"{settings.worker_mock_publish_base_url}/{provider.value}/{publish_job.id}"
         publish_job.response_snapshot = {
             "mode": "mock",
+            "provider": provider.value,
             "external_post_id": publish_job.external_post_id,
             "post_url": publish_job.post_url,
         }
     elif mode == "wordpress":
-        tags = [t.strip() for t in settings.worker_publish_default_tags.split(",") if t.strip()]
+        if provider != ProviderType.wordpress:
+            raise ValueError("worker_publish_mode=wordpress requires provider=wordpress")
         external_id, post_url = publish_to_wordpress(
             base_url=settings.wordpress_base_url,
             username=settings.wordpress_username,
@@ -105,6 +110,58 @@ def _execute_publish_job(db: Session, job: Job) -> dict:
         publish_job.post_url = post_url
         publish_job.response_snapshot = {
             "mode": "wordpress",
+            "provider": provider.value,
+            "external_post_id": external_id,
+            "post_url": post_url,
+        }
+    elif mode == "tistory":
+        if provider != ProviderType.tistory:
+            raise ValueError("worker_publish_mode=tistory requires provider=tistory")
+        external_id, post_url = publish_to_tistory(
+            api_url=settings.tistory_api_url,
+            access_token=settings.tistory_access_token,
+            blog_name=settings.tistory_blog_name,
+            title=draft.title,
+            markdown=draft.markdown,
+            tags=tags,
+        )
+        publish_job.status = PublishStatus.PUBLISHED
+        publish_job.external_post_id = external_id
+        publish_job.post_url = post_url
+        publish_job.response_snapshot = {
+            "mode": "tistory",
+            "provider": provider.value,
+            "external_post_id": external_id,
+            "post_url": post_url,
+        }
+    elif mode == "live":
+        if provider == ProviderType.wordpress:
+            external_id, post_url = publish_to_wordpress(
+                base_url=settings.wordpress_base_url,
+                username=settings.wordpress_username,
+                app_password=settings.wordpress_app_password,
+                title=draft.title,
+                markdown=draft.markdown,
+                tags=tags,
+            )
+        elif provider == ProviderType.tistory:
+            external_id, post_url = publish_to_tistory(
+                api_url=settings.tistory_api_url,
+                access_token=settings.tistory_access_token,
+                blog_name=settings.tistory_blog_name,
+                title=draft.title,
+                markdown=draft.markdown,
+                tags=tags,
+            )
+        else:
+            raise ValueError(f"Unsupported provider in live mode: {provider}")
+
+        publish_job.status = PublishStatus.PUBLISHED
+        publish_job.external_post_id = external_id
+        publish_job.post_url = post_url
+        publish_job.response_snapshot = {
+            "mode": "live",
+            "provider": provider.value,
             "external_post_id": external_id,
             "post_url": post_url,
         }
@@ -117,6 +174,7 @@ def _execute_publish_job(db: Session, job: Job) -> dict:
         "publish_job_id": str(publish_job.id),
         "post_url": publish_job.post_url,
         "mode": mode,
+        "provider": provider.value,
     }
 
 

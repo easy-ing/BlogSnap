@@ -9,7 +9,7 @@ CREATE TYPE job_type AS ENUM ('draft_generate', 'draft_regenerate', 'publish');
 CREATE TYPE job_status AS ENUM ('PENDING', 'RUNNING', 'SUCCEEDED', 'FAILED', 'RETRYING');
 CREATE TYPE draft_status AS ENUM ('GENERATED', 'SELECTED', 'ARCHIVED');
 CREATE TYPE publish_status AS ENUM ('REQUESTED', 'PUBLISHED', 'ERROR');
-CREATE TYPE provider_type AS ENUM ('wordpress');
+CREATE TYPE provider_type AS ENUM ('wordpress', 'tistory');
 CREATE TYPE asset_status AS ENUM ('UPLOADED', 'AVAILABLE', 'DELETED', 'ERROR');
 
 -- Users

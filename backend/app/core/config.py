@@ -14,6 +14,9 @@ class Settings(BaseSettings):
     wordpress_base_url: str = ""
     wordpress_username: str = ""
     wordpress_app_password: str = ""
+    tistory_api_url: str = "https://www.tistory.com/apis/post/write"
+    tistory_access_token: str = ""
+    tistory_blog_name: str = ""
     worker_publish_default_tags: str = "자동화,AI,블로그"
     auth_secret_key: str = "change-me-dev-secret"
     auth_token_exp_minutes: int = 120

@@ -56,3 +56,42 @@ def publish_to_wordpress(
     resp.raise_for_status()
     data = resp.json()
     return str(data.get("id", "")), str(data.get("link", ""))
+
+
+def publish_to_tistory(
+    *,
+    api_url: str,
+    access_token: str,
+    blog_name: str,
+    title: str,
+    markdown: str,
+    tags: List[str],
+) -> Tuple[str, str]:
+    if not api_url or not access_token or not blog_name:
+        raise ValueError("Tistory credentials are missing for tistory publish mode.")
+
+    content_html = markdown_to_html(markdown)
+    payload = {
+        "access_token": access_token,
+        "output": "json",
+        "blogName": blog_name,
+        "title": title,
+        "content": content_html,
+        "visibility": 3,
+    }
+    if tags:
+        payload["tag"] = ",".join(tags)
+
+    resp = requests.post(api_url, data=payload, timeout=30)
+    resp.raise_for_status()
+    data = resp.json()
+
+    # Expected Tistory response shape:
+    # {"tistory":{"status":"200","postId":"...","url":"..."}}
+    tistory_obj = data.get("tistory", {}) if isinstance(data, dict) else {}
+    external_id = str(tistory_obj.get("postId", ""))
+    post_url = str(tistory_obj.get("url", ""))
+
+    if not external_id and not post_url:
+        raise ValueError("Unexpected Tistory response payload")
+    return external_id, post_url

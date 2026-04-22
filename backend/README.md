@@ -7,7 +7,7 @@ uvicorn backend.app.main:app --reload --port 8000
 
 ## Required env
 - `DATABASE_URL` (default: `postgresql+psycopg://blogsnap:blogsnap@localhost:55432/blogsnap`)
-- `WORKER_PUBLISH_MODE` (`mock` or `wordpress`)
+- `WORKER_PUBLISH_MODE` (`mock`, `wordpress`, `tistory`, `live`)
 - `WORKER_MOCK_PUBLISH_BASE_URL` (mock mode URL prefix)
 - `WORKER_POLL_SECONDS` (daemon polling interval)
 - `WORKER_BATCH_SIZE` (jobs per poll)
@@ -29,7 +29,8 @@ uvicorn backend.app.main:app --reload --port 8000
 - `ALERT_SILENCE_WINDOW_WARNING_SECONDS`
 - `ALERT_SILENCE_WINDOW_CRITICAL_SECONDS`
 - `ALERT_SILENCE_WINDOW_GENERIC_SECONDS`
-- `WORDPRESS_BASE_URL`, `WORDPRESS_USERNAME`, `WORDPRESS_APP_PASSWORD` (wordpress mode)
+- `WORDPRESS_BASE_URL`, `WORDPRESS_USERNAME`, `WORDPRESS_APP_PASSWORD` (wordpress/live mode)
+- `TISTORY_API_URL`, `TISTORY_ACCESS_TOKEN`, `TISTORY_BLOG_NAME` (tistory/live mode)
 - `WORKER_PUBLISH_DEFAULT_TAGS` (comma-separated)
 
 ## Endpoints (initial)
@@ -133,4 +134,9 @@ Day17 auth/rbac demo:
 Day18 scheduled publish demo:
 ```bash
 ./scripts/day18_scheduled_publish_demo.sh
+```
+
+Day19 multi-provider demo:
+```bash
+./scripts/day19_multi_provider_demo.sh
 ```
