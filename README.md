@@ -467,3 +467,25 @@ docker compose -f docker-compose.dev.yml up -d postgres
 ```
 
 위 실행으로 동일 초고에 대해 `wordpress`와 `tistory` 발행 Job이 각각 독립 처리되고, mock URL에 provider 경로가 반영되는지 확인합니다.
+
+## Day 20 진행 현황 (2026-04-23)
+- 실행 계획: [docs/day20-plan.md](/Users/jin/Desktop/easy_ing/BlogSnap/docs/day20-plan.md)
+- 초고 품질 점수화 로직:
+  - [backend/app/services/draft_quality.py](/Users/jin/Desktop/easy_ing/BlogSnap/backend/app/services/draft_quality.py)
+  - 평가 항목: 키워드 반영률, 본문 길이, 구조(헤딩), 감정톤 정합성
+- 추천 API 추가:
+  - [backend/app/api/drafts.py](/Users/jin/Desktop/easy_ing/BlogSnap/backend/app/api/drafts.py)
+  - `GET /v1/drafts/recommend?project_id=...`
+  - 추천 초고 + 후보 점수/근거 목록 반환
+- 스키마/검증:
+  - [backend/app/schemas/drafts.py](/Users/jin/Desktop/easy_ing/BlogSnap/backend/app/schemas/drafts.py)
+  - [tests/test_draft_recommendation.py](/Users/jin/Desktop/easy_ing/BlogSnap/tests/test_draft_recommendation.py)
+- Day20 데모:
+  - [scripts/day20_quality_recommend_demo.sh](/Users/jin/Desktop/easy_ing/BlogSnap/scripts/day20_quality_recommend_demo.sh)
+
+### Day 20 실행
+```bash
+./scripts/day20_quality_recommend_demo.sh
+```
+
+위 실행으로 최신 버전 초고 3안의 점수화 결과와 추천안이 정상 반환되는지 확인합니다.

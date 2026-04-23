@@ -43,6 +43,7 @@ uvicorn backend.app.main:app --reload --port 8000
 - `GET /v1/projects`
 - `POST /v1/drafts/generate`
 - `GET /v1/drafts?project_id=...`
+- `GET /v1/drafts/recommend?project_id=...`
 - `POST /v1/drafts/{draft_id}/regenerate`
 - `POST /v1/drafts/{draft_id}/select`
 - `POST /v1/publish`
@@ -139,4 +140,9 @@ Day18 scheduled publish demo:
 Day19 multi-provider demo:
 ```bash
 ./scripts/day19_multi_provider_demo.sh
+```
+
+Day20 draft quality recommendation demo:
+```bash
+./scripts/day20_quality_recommend_demo.sh
 ```

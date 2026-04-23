@@ -33,3 +33,17 @@ class DraftItemResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class DraftScoredItemResponse(DraftItemResponse):
+    quality_score: float
+    score_reasons: list[str]
+
+
+class DraftRecommendationResponse(BaseModel):
+    project_id: UUID
+    latest_version_no: int
+    recommended_draft_id: UUID
+    recommended_title: str
+    recommendation_reason: str
+    candidates: list[DraftScoredItemResponse]

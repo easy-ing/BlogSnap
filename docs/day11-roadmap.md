@@ -43,3 +43,8 @@
 - 멀티 프로바이더 발행(`wordpress`, `tistory`) 확장
 - worker publish 모드 확장(`mock`/`wordpress`/`tistory`/`live`)
 - Day19 멀티 프로바이더 데모/테스트 추가
+
+## Day 20 (완료)
+- 초고 품질 점수화(키워드/길이/구조/감정톤) 로직 추가
+- 추천 API `GET /v1/drafts/recommend` 추가
+- Day20 추천 데모/테스트 추가
