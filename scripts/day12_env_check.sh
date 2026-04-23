@@ -16,15 +16,26 @@ warn=0
 
 require_key() {
   local key="$1"
-  if ! rg -q "^${key}=" "$ENV_FILE"; then
-    echo "[ERROR] missing key: ${key}"
-    missing=1
+  if command -v rg >/dev/null 2>&1; then
+    if rg -q "^${key}=" "$ENV_FILE"; then
+      return 0
+    fi
+  else
+    if grep -q "^${key}=" "$ENV_FILE"; then
+      return 0
+    fi
   fi
+  echo "[ERROR] missing key: ${key}"
+  missing=1
 }
 
 read_key() {
   local key="$1"
-  rg "^${key}=" "$ENV_FILE" | tail -n1 | cut -d'=' -f2-
+  if command -v rg >/dev/null 2>&1; then
+    rg "^${key}=" "$ENV_FILE" | tail -n1 | cut -d'=' -f2-
+  else
+    grep "^${key}=" "$ENV_FILE" | tail -n1 | cut -d'=' -f2-
+  fi
 }
 
 require_key "OPENAI_API_KEY"
