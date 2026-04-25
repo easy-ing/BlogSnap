@@ -7,7 +7,15 @@ from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
 from backend.app.db.base import Base
-from backend.app.models.enums import DraftStatus, JobStatus, JobType, PostType, ProviderType, PublishStatus
+from backend.app.models.enums import (
+    DraftStatus,
+    JobStatus,
+    JobType,
+    PostType,
+    ProviderType,
+    PublishStatus,
+    ScheduleStatus,
+)
 
 
 class User(Base):
@@ -84,5 +92,11 @@ class PublishJob(Base):
     error_message: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     request_snapshot: Mapped[dict] = mapped_column(JSONB, nullable=False, default=dict)
     response_snapshot: Mapped[dict] = mapped_column(JSONB, nullable=False, default=dict)
+    schedule_status: Mapped[ScheduleStatus] = mapped_column(
+        Enum(ScheduleStatus, name="schedule_status"),
+        default=ScheduleStatus.READY,
+    )
+    scheduled_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    cancelled_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())

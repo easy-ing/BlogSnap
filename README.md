@@ -489,3 +489,26 @@ docker compose -f docker-compose.dev.yml up -d postgres
 ```
 
 위 실행으로 최신 버전 초고 3안의 점수화 결과와 추천안이 정상 반환되는지 확인합니다.
+
+## Day 21 진행 현황 (2026-04-24)
+- 실행 계획: [docs/day21-plan.md](/Users/jin/Desktop/easy_ing/BlogSnap/docs/day21-plan.md)
+- 예약 제어 API:
+  - [backend/app/api/publish.py](/Users/jin/Desktop/easy_ing/BlogSnap/backend/app/api/publish.py)
+  - `PATCH /v1/publish/{publish_job_id}/schedule`
+  - `POST /v1/publish/{publish_job_id}/cancel`
+- 예약 상태 모델 확장:
+  - [backend/app/models/enums.py](/Users/jin/Desktop/easy_ing/BlogSnap/backend/app/models/enums.py) (`ScheduleStatus`)
+  - [backend/app/models/entities.py](/Users/jin/Desktop/easy_ing/BlogSnap/backend/app/models/entities.py) (`schedule_status`, `scheduled_at`, `cancelled_at`)
+  - [db/migrations/0001_init.sql](/Users/jin/Desktop/easy_ing/BlogSnap/db/migrations/0001_init.sql)
+- 워커 실행 가드:
+  - [backend/app/worker/runner.py](/Users/jin/Desktop/easy_ing/BlogSnap/backend/app/worker/runner.py) (취소된 예약 실행 차단)
+- Day21 테스트/데모:
+  - [tests/test_scheduled_publish_controls.py](/Users/jin/Desktop/easy_ing/BlogSnap/tests/test_scheduled_publish_controls.py)
+  - [scripts/day21_scheduling_control_demo.sh](/Users/jin/Desktop/easy_ing/BlogSnap/scripts/day21_scheduling_control_demo.sh)
+
+### Day 21 실행
+```bash
+./scripts/day21_scheduling_control_demo.sh
+```
+
+위 실행으로 예약 시간 변경 시 즉시 실행 가능 전환과 예약 취소 후 실행 차단이 정상 동작하는지 확인합니다.

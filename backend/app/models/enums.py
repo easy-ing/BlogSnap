@@ -33,6 +33,12 @@ class PublishStatus(str, Enum):
     ERROR = "ERROR"
 
 
+class ScheduleStatus(str, Enum):
+    READY = "READY"
+    SCHEDULED = "SCHEDULED"
+    CANCELLED = "CANCELLED"
+
+
 class ProviderType(str, Enum):
     wordpress = "wordpress"
     tistory = "tistory"

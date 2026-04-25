@@ -9,6 +9,7 @@ CREATE TYPE job_type AS ENUM ('draft_generate', 'draft_regenerate', 'publish');
 CREATE TYPE job_status AS ENUM ('PENDING', 'RUNNING', 'SUCCEEDED', 'FAILED', 'RETRYING');
 CREATE TYPE draft_status AS ENUM ('GENERATED', 'SELECTED', 'ARCHIVED');
 CREATE TYPE publish_status AS ENUM ('REQUESTED', 'PUBLISHED', 'ERROR');
+CREATE TYPE schedule_status AS ENUM ('READY', 'SCHEDULED', 'CANCELLED');
 CREATE TYPE provider_type AS ENUM ('wordpress', 'tistory');
 CREATE TYPE asset_status AS ENUM ('UPLOADED', 'AVAILABLE', 'DELETED', 'ERROR');
 
@@ -99,6 +100,9 @@ CREATE TABLE publish_jobs (
   post_url TEXT,
   request_snapshot JSONB NOT NULL DEFAULT '{}'::jsonb,
   response_snapshot JSONB NOT NULL DEFAULT '{}'::jsonb,
+  schedule_status schedule_status NOT NULL DEFAULT 'READY',
+  scheduled_at TIMESTAMPTZ,
+  cancelled_at TIMESTAMPTZ,
   error_message TEXT,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()

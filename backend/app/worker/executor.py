@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 
 from backend.app.core.config import settings
 from backend.app.models.entities import Draft, Job, PublishJob
-from backend.app.models.enums import DraftStatus, JobType, ProviderType, PublishStatus
+from backend.app.models.enums import DraftStatus, JobType, ProviderType, PublishStatus, ScheduleStatus
 from backend.app.worker.publishers import publish_to_tistory, publish_to_wordpress
 
 
@@ -169,6 +169,8 @@ def _execute_publish_job(db: Session, job: Job) -> dict:
         raise ValueError(f"Unsupported worker publish mode: {settings.worker_publish_mode}")
 
     publish_job.updated_at = datetime.utcnow()
+    if publish_job.schedule_status != ScheduleStatus.CANCELLED:
+        publish_job.schedule_status = ScheduleStatus.READY
 
     return {
         "publish_job_id": str(publish_job.id),
