@@ -5,8 +5,8 @@ from uuid import UUID
 from sqlalchemy import or_, select
 from sqlalchemy.orm import Session
 
-from backend.app.models.entities import Job
-from backend.app.models.enums import JobStatus
+from backend.app.models.entities import Job, PublishJob
+from backend.app.models.enums import JobStatus, JobType, PublishStatus, ScheduleStatus
 from backend.app.core.metrics import JOB_PROCESSED
 from backend.app.worker.executor import execute_job
 from backend.app.worker.retry_policy import compute_next_retry_at, is_retryable
@@ -46,6 +46,22 @@ class JobRunner:
 
         if job.status not in (JobStatus.PENDING, JobStatus.RETRYING, JobStatus.RUNNING):
             return job
+
+        if job.type == JobType.publish:
+            publish_job = self.db.scalar(select(PublishJob).where(PublishJob.job_id == job.id))
+            if publish_job and publish_job.schedule_status == ScheduleStatus.CANCELLED:
+                now = datetime.now(timezone.utc)
+                job.status = JobStatus.FAILED
+                job.error_message = "Publish job cancelled by user"
+                job.completed_at = now
+                job.next_retry_at = None
+                job.updated_at = now
+                publish_job.status = PublishStatus.ERROR
+                publish_job.error_message = "Cancelled by user"
+                publish_job.updated_at = now
+                self.db.commit()
+                self.db.refresh(job)
+                return job
 
         now = datetime.now(timezone.utc)
         if job.status == JobStatus.RETRYING and job.next_retry_at and job.next_retry_at > now:

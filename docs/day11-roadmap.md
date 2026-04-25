@@ -48,3 +48,8 @@
 - 초고 품질 점수화(키워드/길이/구조/감정톤) 로직 추가
 - 추천 API `GET /v1/drafts/recommend` 추가
 - Day20 추천 데모/테스트 추가
+
+## Day 21 (완료)
+- 예약 발행 제어 API 추가(`schedule update`, `cancel`)
+- 예약 상태 필드 확장(`schedule_status`, `scheduled_at`, `cancelled_at`)
+- 취소 예약 실행 차단 가드 + Day21 데모/테스트 추가

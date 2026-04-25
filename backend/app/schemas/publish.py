@@ -2,9 +2,9 @@ from uuid import UUID
 from datetime import datetime
 from typing import Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
-from backend.app.models.enums import ProviderType, PublishStatus
+from backend.app.models.enums import ProviderType, PublishStatus, ScheduleStatus
 
 
 class PublishRequest(BaseModel):
@@ -21,7 +21,18 @@ class PublishResponse(BaseModel):
     draft_id: UUID
     status: PublishStatus
     post_url: Optional[str]
+    schedule_status: ScheduleStatus
+    scheduled_at: Optional[datetime]
+    cancelled_at: Optional[datetime]
+    error_message: Optional[str]
     request_snapshot: dict
 
     class Config:
         from_attributes = True
+
+
+class PublishScheduleUpdateRequest(BaseModel):
+    publish_at: Optional[datetime] = Field(
+        default=None,
+        description="예약 시간. null이면 즉시 실행 가능 상태로 전환",
+    )
