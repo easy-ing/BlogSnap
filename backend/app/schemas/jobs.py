@@ -31,3 +31,10 @@ class QueueSummaryResponse(BaseModel):
     running: int
     failed: int
     succeeded: int
+
+
+class ScheduleReconcileResponse(BaseModel):
+    project_id: Optional[UUID]
+    scanned: int
+    activated: int
+    waiting: int
