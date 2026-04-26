@@ -12,9 +12,16 @@ def run_forever(max_loops: int = 0) -> None:
         db = SessionLocal()
         try:
             runner = JobRunner(db)
+            reconciled = runner.reconcile_schedules()
             processed = runner.run_batch(limit=settings.worker_batch_size)
         finally:
             db.close()
+
+        if reconciled.get("activated", 0) > 0:
+            print(
+                f"[INFO] schedules-activated={reconciled['activated']} "
+                f"waiting={reconciled['waiting']}"
+            )
 
         if processed:
             print(f"[INFO] processed={len(processed)}")

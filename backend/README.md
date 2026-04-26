@@ -54,6 +54,7 @@ uvicorn backend.app.main:app --reload --port 8000
 - `POST /v1/jobs/{job_id}/run`
 - `POST /v1/jobs/run-next?project_id=...`
 - `POST /v1/jobs/run-batch?project_id=...&limit=10`
+- `POST /v1/jobs/reconcile-schedules?project_id=...`
 - `GET /v1/jobs/queue-summary?project_id=...`
 
 ## Worker
@@ -152,4 +153,9 @@ Day20 draft quality recommendation demo:
 Day21 scheduling controls demo:
 ```bash
 ./scripts/day21_scheduling_control_demo.sh
+```
+
+Day22 schedule reconcile demo:
+```bash
+./scripts/day22_schedule_reconcile_demo.sh
 ```

@@ -512,3 +512,25 @@ docker compose -f docker-compose.dev.yml up -d postgres
 ```
 
 위 실행으로 예약 시간 변경 시 즉시 실행 가능 전환과 예약 취소 후 실행 차단이 정상 동작하는지 확인합니다.
+
+## Day 22 진행 현황 (2026-04-26)
+- 실행 계획: [docs/day22-plan.md](/Users/jin/Desktop/easy_ing/BlogSnap/docs/day22-plan.md)
+- 예약 재조정 로직:
+  - [backend/app/worker/scheduler.py](/Users/jin/Desktop/easy_ing/BlogSnap/backend/app/worker/scheduler.py)
+  - 예약 시각 도달 건 `SCHEDULED -> READY` 전환
+- 재조정 API:
+  - [backend/app/api/jobs.py](/Users/jin/Desktop/easy_ing/BlogSnap/backend/app/api/jobs.py)
+  - `POST /v1/jobs/reconcile-schedules?project_id=...`
+- 워커 루프 통합:
+  - [backend/app/worker/run_forever.py](/Users/jin/Desktop/easy_ing/BlogSnap/backend/app/worker/run_forever.py)
+  - 배치 실행 전 reconcile 단계 수행
+- Day22 테스트/데모:
+  - [tests/test_schedule_reconcile.py](/Users/jin/Desktop/easy_ing/BlogSnap/tests/test_schedule_reconcile.py)
+  - [scripts/day22_schedule_reconcile_demo.sh](/Users/jin/Desktop/easy_ing/BlogSnap/scripts/day22_schedule_reconcile_demo.sh)
+
+### Day 22 실행
+```bash
+./scripts/day22_schedule_reconcile_demo.sh
+```
+
+위 실행으로 예약 미래 건은 waiting 유지, 시각 도달 건은 activated 처리 후 정상 발행되는 흐름을 확인합니다.

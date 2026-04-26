@@ -53,3 +53,8 @@
 - 예약 발행 제어 API 추가(`schedule update`, `cancel`)
 - 예약 상태 필드 확장(`schedule_status`, `scheduled_at`, `cancelled_at`)
 - 취소 예약 실행 차단 가드 + Day21 데모/테스트 추가
+
+## Day 22 (완료)
+- 예약 재조정(reconcile) 루프 분리
+- `POST /v1/jobs/reconcile-schedules` API 추가
+- 워커 루프에 schedule reconcile 단계 추가 + Day22 데모/테스트 추가

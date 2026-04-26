@@ -1,5 +1,6 @@
 from datetime import datetime, timezone
 from typing import Optional
+from typing import Optional
 from uuid import UUID
 
 from sqlalchemy import or_, select
@@ -10,6 +11,7 @@ from backend.app.models.enums import JobStatus, JobType, PublishStatus, Schedule
 from backend.app.core.metrics import JOB_PROCESSED
 from backend.app.worker.executor import execute_job
 from backend.app.worker.retry_policy import compute_next_retry_at, is_retryable
+from backend.app.worker.scheduler import reconcile_scheduled_publish_jobs
 
 
 class JobRunner:
@@ -93,6 +95,9 @@ class JobRunner:
                 break
             processed.append(job)
         return processed
+
+    def reconcile_schedules(self, *, project_id: Optional[UUID] = None) -> dict:
+        return reconcile_scheduled_publish_jobs(self.db, project_id=project_id)
 
     def _execute_with_retry(self, job: Job) -> Job:
         try:

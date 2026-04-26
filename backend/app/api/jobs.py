@@ -10,8 +10,9 @@ from backend.app.core.auth import ensure_project_owner, get_current_user
 from backend.app.db.session import get_db
 from backend.app.models.entities import Job, User
 from backend.app.models.enums import JobStatus
-from backend.app.schemas.jobs import JobResponse, QueueSummaryResponse
+from backend.app.schemas.jobs import JobResponse, QueueSummaryResponse, ScheduleReconcileResponse
 from backend.app.worker.runner import JobRunner
+from backend.app.worker.scheduler import reconcile_scheduled_publish_jobs
 
 
 router = APIRouter(prefix="/v1/jobs", tags=["jobs"])
@@ -85,6 +86,17 @@ def run_next_job(
         raise HTTPException(status_code=404, detail="No runnable jobs")
     runner = JobRunner(db)
     return runner.run_job_by_id(job.id)
+
+
+@router.post("/reconcile-schedules", response_model=ScheduleReconcileResponse)
+def reconcile_schedules(
+    project_id: UUID = Query(...),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> ScheduleReconcileResponse:
+    ensure_project_owner(db=db, project_id=project_id, user_id=current_user.id)
+    payload = reconcile_scheduled_publish_jobs(db=db, project_id=project_id)
+    return ScheduleReconcileResponse(**payload)
 
 
 @router.post("/{job_id}/run", response_model=JobResponse)
