@@ -1,9 +1,8 @@
 from collections import Counter
-from datetime import datetime, timezone
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy import or_, select
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from backend.app.core.auth import ensure_project_owner, get_current_user
@@ -27,23 +26,7 @@ def run_batch_jobs(
 ) -> list[Job]:
     ensure_project_owner(db=db, project_id=project_id, user_id=current_user.id)
     runner = JobRunner(db)
-    processed: list[Job] = []
-    now = datetime.now(timezone.utc)
-    for _ in range(limit):
-        job = db.scalar(
-            select(Job)
-            .where(
-                Job.project_id == project_id,
-                Job.status.in_([JobStatus.PENDING, JobStatus.RETRYING]),
-                or_(Job.next_retry_at.is_(None), Job.next_retry_at <= now),
-            )
-            .order_by(Job.created_at.asc())
-            .limit(1)
-        )
-        if not job:
-            break
-        processed.append(runner.run_job_by_id(job.id))
-    return processed
+    return runner.run_batch(limit=limit, project_id=project_id)
 
 
 @router.get("/queue-summary", response_model=QueueSummaryResponse)
@@ -71,21 +54,11 @@ def run_next_job(
     current_user: User = Depends(get_current_user),
 ) -> Job:
     ensure_project_owner(db=db, project_id=project_id, user_id=current_user.id)
-    now = datetime.now(timezone.utc)
-    job = db.scalar(
-        select(Job)
-        .where(
-            Job.project_id == project_id,
-            Job.status.in_([JobStatus.PENDING, JobStatus.RETRYING]),
-            or_(Job.next_retry_at.is_(None), Job.next_retry_at <= now),
-        )
-        .order_by(Job.created_at.asc())
-        .limit(1)
-    )
+    runner = JobRunner(db)
+    job = runner.run_next(project_id=project_id)
     if not job:
         raise HTTPException(status_code=404, detail="No runnable jobs")
-    runner = JobRunner(db)
-    return runner.run_job_by_id(job.id)
+    return job
 
 
 @router.post("/reconcile-schedules", response_model=ScheduleReconcileResponse)

@@ -534,3 +534,21 @@ docker compose -f docker-compose.dev.yml up -d postgres
 ```
 
 위 실행으로 예약 미래 건은 waiting 유지, 시각 도달 건은 activated 처리 후 정상 발행되는 흐름을 확인합니다.
+
+## Day 23 진행 현황 (2026-04-28)
+- 실행 계획: [docs/day23-plan.md](/Users/jin/Desktop/easy_ing/BlogSnap/docs/day23-plan.md)
+- 워커 클레임 안정성 강화:
+  - [backend/app/worker/runner.py](/Users/jin/Desktop/easy_ing/BlogSnap/backend/app/worker/runner.py)
+  - `claim_next_job`에 `FOR UPDATE SKIP LOCKED` 적용
+- 실행 경로 일원화:
+  - [backend/app/api/jobs.py](/Users/jin/Desktop/easy_ing/BlogSnap/backend/app/api/jobs.py)
+  - `run-next/run-batch`가 runner의 project 스코프 실행을 직접 사용
+- Day23 테스트:
+  - [tests/test_job_runner_project_scope.py](/Users/jin/Desktop/easy_ing/BlogSnap/tests/test_job_runner_project_scope.py)
+
+### Day 23 검증
+```bash
+PYTHONPATH=. python3 -m pytest -q tests/test_job_runner_project_scope.py
+```
+
+위 검증으로 project 단위 실행 분리와 limit 처리 일관성을 확인합니다.
