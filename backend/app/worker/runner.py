@@ -1,6 +1,5 @@
 from datetime import datetime, timezone
 from typing import Optional
-from typing import Optional
 from uuid import UUID
 
 from sqlalchemy import or_, select
@@ -18,17 +17,16 @@ class JobRunner:
     def __init__(self, db: Session) -> None:
         self.db = db
 
-    def claim_next_job(self) -> Optional[Job]:
+    def claim_next_job(self, *, project_id: Optional[UUID] = None) -> Optional[Job]:
         now = datetime.now(timezone.utc)
-        stmt = (
-            select(Job)
-            .where(
-                Job.status.in_([JobStatus.PENDING, JobStatus.RETRYING]),
-                or_(Job.next_retry_at.is_(None), Job.next_retry_at <= now),
-            )
-            .order_by(Job.created_at.asc())
-            .limit(1)
+        stmt = select(Job).where(
+            Job.status.in_([JobStatus.PENDING, JobStatus.RETRYING]),
+            or_(Job.next_retry_at.is_(None), Job.next_retry_at <= now),
         )
+        if project_id:
+            stmt = stmt.where(Job.project_id == project_id)
+        stmt = stmt.order_by(Job.created_at.asc()).limit(1).with_for_update(skip_locked=True)
+
         job = self.db.scalar(stmt)
         if not job:
             return None
@@ -79,18 +77,18 @@ class JobRunner:
 
         return self._execute_with_retry(job)
 
-    def run_next(self) -> Optional[Job]:
-        job = self.claim_next_job()
+    def run_next(self, *, project_id: Optional[UUID] = None) -> Optional[Job]:
+        job = self.claim_next_job(project_id=project_id)
         if not job:
             return None
         return self._execute_with_retry(job)
 
-    def run_batch(self, limit: int = 10) -> list[Job]:
+    def run_batch(self, limit: int = 10, *, project_id: Optional[UUID] = None) -> list[Job]:
         if limit < 1:
             return []
         processed: list[Job] = []
         for _ in range(limit):
-            job = self.run_next()
+            job = self.run_next(project_id=project_id)
             if not job:
                 break
             processed.append(job)

@@ -58,3 +58,8 @@
 - 예약 재조정(reconcile) 루프 분리
 - `POST /v1/jobs/reconcile-schedules` API 추가
 - 워커 루프에 schedule reconcile 단계 추가 + Day22 데모/테스트 추가
+
+## Day 23 (완료)
+- `claim_next_job` DB 락(`FOR UPDATE SKIP LOCKED`) 적용
+- `run-next/run-batch` project 스코프 실행 경로 runner로 일원화
+- Day23 프로젝트 스코프 테스트 추가

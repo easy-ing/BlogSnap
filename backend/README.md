@@ -159,3 +159,8 @@ Day22 schedule reconcile demo:
 ```bash
 ./scripts/day22_schedule_reconcile_demo.sh
 ```
+
+Day23 runner scope test:
+```bash
+PYTHONPATH=. python3 -m pytest -q tests/test_job_runner_project_scope.py
+```
