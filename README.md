@@ -552,3 +552,20 @@ PYTHONPATH=. python3 -m pytest -q tests/test_job_runner_project_scope.py
 ```
 
 위 검증으로 project 단위 실행 분리와 limit 처리 일관성을 확인합니다.
+
+## Day 24 진행 현황 (2026-04-29)
+- 실행 계획: [docs/day24-plan.md](/Users/jin/Desktop/easy_ing/BlogSnap/docs/day24-plan.md)
+- Pydantic 스키마 설정 최신화:
+  - [auth.py](/Users/jin/Desktop/easy_ing/BlogSnap/backend/app/schemas/auth.py)
+  - [drafts.py](/Users/jin/Desktop/easy_ing/BlogSnap/backend/app/schemas/drafts.py)
+  - [jobs.py](/Users/jin/Desktop/easy_ing/BlogSnap/backend/app/schemas/jobs.py)
+  - [publish.py](/Users/jin/Desktop/easy_ing/BlogSnap/backend/app/schemas/publish.py)
+  - [projects.py](/Users/jin/Desktop/easy_ing/BlogSnap/backend/app/schemas/projects.py)
+- `class Config`를 `ConfigDict`로 전환해 V2 deprecation warning 노이즈를 줄였습니다.
+
+### Day 24 검증
+```bash
+./scripts/day13_test_suite.sh
+```
+
+위 검증에서 기존 기능 회귀 없이 테스트가 통과하는지 확인합니다.

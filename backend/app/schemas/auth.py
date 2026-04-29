@@ -1,7 +1,7 @@
 from uuid import UUID
 from typing import Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class LoginRequest(BaseModel):
@@ -19,5 +19,4 @@ class MeResponse(BaseModel):
     email: str
     display_name: Optional[str]
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)

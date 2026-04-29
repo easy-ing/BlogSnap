@@ -63,3 +63,8 @@
 - `claim_next_job` DB 락(`FOR UPDATE SKIP LOCKED`) 적용
 - `run-next/run-batch` project 스코프 실행 경로 runner로 일원화
 - Day23 프로젝트 스코프 테스트 추가
+
+## Day 24 (완료)
+- Pydantic schema 설정을 `ConfigDict` 기반으로 전환
+- V2 deprecation warning 노이즈 감소
+- Day24 문서/검증 반영
