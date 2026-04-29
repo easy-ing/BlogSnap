@@ -164,3 +164,8 @@ Day23 runner scope test:
 ```bash
 PYTHONPATH=. python3 -m pytest -q tests/test_job_runner_project_scope.py
 ```
+
+Day24 schema config modernization check:
+```bash
+./scripts/day13_test_suite.sh
+```
