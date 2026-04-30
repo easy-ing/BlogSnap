@@ -131,6 +131,17 @@ CREATE TABLE provider_tokens (
   UNIQUE (user_id, provider)
 );
 
+-- Auth sessions (refresh token lifecycle)
+CREATE TABLE auth_sessions (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  refresh_token_hash TEXT NOT NULL UNIQUE,
+  expires_at TIMESTAMPTZ NOT NULL,
+  revoked_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
 -- Indexes
 CREATE INDEX idx_projects_user_id ON projects(user_id);
 CREATE INDEX idx_assets_project_created_at ON assets(project_id, created_at DESC);
@@ -152,3 +163,4 @@ CREATE INDEX idx_publish_jobs_project_status_created_at
 CREATE INDEX idx_publish_jobs_draft_id ON publish_jobs(draft_id);
 CREATE INDEX idx_publish_logs_publish_job_id_created_at
   ON publish_logs(publish_job_id, created_at DESC);
+CREATE INDEX idx_auth_sessions_user_expires_at ON auth_sessions(user_id, expires_at DESC);

@@ -15,6 +15,7 @@ uvicorn backend.app.main:app --reload --port 8000
 - `PROMETHEUS_ENABLED` (`true`/`false`)
 - `AUTH_SECRET_KEY` (token signing key)
 - `AUTH_TOKEN_EXP_MINUTES` (token expiration minutes)
+- `AUTH_REFRESH_TOKEN_EXP_MINUTES` (refresh token expiration minutes)
 - `GRAFANA_ADMIN_PASSWORD` (default `admin`)
 - `ALERT_WEBHOOK_PORT` (default `5001`, alert-webhook receiver)
 - `ALERT_WEBHOOK_LOG_PATH` (default `/data/alerts.jsonl`)
@@ -38,6 +39,8 @@ uvicorn backend.app.main:app --reload --port 8000
 - `GET /health/ready`
 - `GET /health/metrics`
 - `POST /v1/auth/login`
+- `POST /v1/auth/refresh`
+- `POST /v1/auth/logout`
 - `GET /v1/auth/me`
 - `POST /v1/projects`
 - `GET /v1/projects`
@@ -168,4 +171,9 @@ PYTHONPATH=. python3 -m pytest -q tests/test_job_runner_project_scope.py
 Day24 schema config modernization check:
 ```bash
 ./scripts/day13_test_suite.sh
+```
+
+Day25 auth refresh/logout demo:
+```bash
+./scripts/day25_auth_refresh_logout_demo.sh
 ```

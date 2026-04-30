@@ -67,6 +67,7 @@ cp .env.example .env
 - `WORKER_POLL_SECONDS`, `WORKER_BATCH_SIZE`
 - `LOG_LEVEL`
 - `PROMETHEUS_ENABLED`
+- `AUTH_SECRET_KEY`, `AUTH_TOKEN_EXP_MINUTES`, `AUTH_REFRESH_TOKEN_EXP_MINUTES`
 - `GRAFANA_ADMIN_PASSWORD`
 - `WORDPRESS_BASE_URL`, `WORDPRESS_USERNAME`, `WORDPRESS_APP_PASSWORD` (wordpress/live 모드 시)
 - `TISTORY_API_URL`, `TISTORY_ACCESS_TOKEN`, `TISTORY_BLOG_NAME` (tistory/live 모드 시)
@@ -569,3 +570,23 @@ PYTHONPATH=. python3 -m pytest -q tests/test_job_runner_project_scope.py
 ```
 
 위 검증에서 기존 기능 회귀 없이 테스트가 통과하는지 확인합니다.
+
+## Day 25 진행 현황 (2026-04-30)
+- 실행 계획: [docs/day25-plan.md](/Users/jin/Desktop/easy_ing/BlogSnap/docs/day25-plan.md)
+- 인증 토큰 고도화:
+  - [auth.py](/Users/jin/Desktop/easy_ing/BlogSnap/backend/app/core/auth.py) (`access`/`refresh` 타입 분리)
+  - [auth.py](/Users/jin/Desktop/easy_ing/BlogSnap/backend/app/api/auth.py) (`/refresh`, `/logout`)
+  - [auth.py](/Users/jin/Desktop/easy_ing/BlogSnap/backend/app/schemas/auth.py)
+- 세션 저장:
+  - [entities.py](/Users/jin/Desktop/easy_ing/BlogSnap/backend/app/models/entities.py) (`AuthSession`)
+  - [0001_init.sql](/Users/jin/Desktop/easy_ing/BlogSnap/db/migrations/0001_init.sql) (`auth_sessions`)
+- Day25 테스트/데모:
+  - [test_auth_refresh_logout.py](/Users/jin/Desktop/easy_ing/BlogSnap/tests/test_auth_refresh_logout.py)
+  - [day25_auth_refresh_logout_demo.sh](/Users/jin/Desktop/easy_ing/BlogSnap/scripts/day25_auth_refresh_logout_demo.sh)
+
+### Day 25 실행
+```bash
+./scripts/day25_auth_refresh_logout_demo.sh
+```
+
+위 실행으로 login -> refresh rotate -> logout revoke -> refresh 차단(401) 흐름을 확인합니다.

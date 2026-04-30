@@ -68,3 +68,8 @@
 - Pydantic schema 설정을 `ConfigDict` 기반으로 전환
 - V2 deprecation warning 노이즈 감소
 - Day24 문서/검증 반영
+
+## Day 25 (완료)
+- refresh token + logout(revoke) 인증 흐름 추가
+- auth 세션 테이블(`auth_sessions`) 도입
+- Day25 인증 데모/테스트 추가
