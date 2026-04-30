@@ -7,6 +7,7 @@ import json
 from datetime import datetime, timedelta, timezone
 from typing import Any, Optional
 from uuid import UUID
+import uuid
 
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
@@ -35,11 +36,13 @@ def _sign(payload_b64: str) -> str:
     return _b64url_encode(sig)
 
 
-def create_access_token(*, user_id: UUID) -> str:
+def create_token(*, user_id: UUID, token_type: str, exp_minutes: int) -> str:
     now = datetime.now(timezone.utc)
-    exp = now + timedelta(minutes=settings.auth_token_exp_minutes)
+    exp = now + timedelta(minutes=exp_minutes)
     payload = {
         "sub": str(user_id),
+        "typ": token_type,
+        "jti": str(uuid.uuid4()),
         "iat": int(now.timestamp()),
         "exp": int(exp.timestamp()),
     }
@@ -48,7 +51,23 @@ def create_access_token(*, user_id: UUID) -> str:
     return f"{payload_b64}.{signature}"
 
 
-def decode_access_token(token: str) -> dict[str, Any]:
+def create_access_token(*, user_id: UUID) -> str:
+    return create_token(
+        user_id=user_id,
+        token_type="access",
+        exp_minutes=settings.auth_token_exp_minutes,
+    )
+
+
+def create_refresh_token(*, user_id: UUID) -> str:
+    return create_token(
+        user_id=user_id,
+        token_type="refresh",
+        exp_minutes=settings.auth_refresh_token_exp_minutes,
+    )
+
+
+def decode_token(token: str) -> dict[str, Any]:
     try:
         payload_b64, signature = token.split(".", 1)
     except ValueError as exc:
@@ -67,6 +86,24 @@ def decode_access_token(token: str) -> dict[str, Any]:
     if exp <= int(datetime.now(timezone.utc).timestamp()):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token expired")
     return payload
+
+
+def decode_access_token(token: str) -> dict[str, Any]:
+    payload = decode_token(token)
+    if payload.get("typ") != "access":
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid access token type")
+    return payload
+
+
+def decode_refresh_token(token: str) -> dict[str, Any]:
+    payload = decode_token(token)
+    if payload.get("typ") != "refresh":
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid refresh token type")
+    return payload
+
+
+def hash_token(token: str) -> str:
+    return hashlib.sha256(token.encode("utf-8")).hexdigest()
 
 
 def get_current_user(

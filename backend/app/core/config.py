@@ -20,6 +20,7 @@ class Settings(BaseSettings):
     worker_publish_default_tags: str = "자동화,AI,블로그"
     auth_secret_key: str = "change-me-dev-secret"
     auth_token_exp_minutes: int = 120
+    auth_refresh_token_exp_minutes: int = 60 * 24 * 14
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
