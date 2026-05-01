@@ -73,3 +73,11 @@
 - refresh token + logout(revoke) 인증 흐름 추가
 - auth 세션 테이블(`auth_sessions`) 도입
 - Day25 인증 데모/테스트 추가
+
+## Day26 완료 (Frontend E2E Integration)
+
+- React + Vite 프론트엔드 앱 신규 추가
+- 로그인/프로젝트/초고생성/선택/발행 플로우 UI 연결
+- refresh 토큰 기반 401 재시도 처리 포함
+- 긍부정 선택 예시 문구 UX 반영
+- 모바일 반응형 스타일 적용
