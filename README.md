@@ -590,20 +590,3 @@ PYTHONPATH=. python3 -m pytest -q tests/test_job_runner_project_scope.py
 ```
 
 위 실행으로 login -> refresh rotate -> logout revoke -> refresh 차단(401) 흐름을 확인합니다.
-
-## Day26 - Frontend E2E 연결
-
-- React + Vite 기반 프론트엔드 앱 추가: [frontend](/Users/jin/Desktop/easy_ing/BlogSnap/frontend)
-- 사용자 플로우 단일 화면 연결:
-  - 로그인 (`/v1/auth/login`)
-  - 프로젝트 생성/선택 (`/v1/projects`)
-  - 초고 생성 (`/v1/drafts/generate`) + 실행 (`/v1/jobs/run-next`)
-  - 초고 선택/재생성 (`/v1/drafts/{id}/select`, `/v1/drafts/{id}/regenerate`)
-  - 자동 발행 (`/v1/publish`) + 실행 (`/v1/jobs/run-next`)
-- UX 포인트:
-  - 글 종류(리뷰/설명/소감문) 선택
-  - 긍부정 값 선택 시 예시 문장 즉시 노출
-  - 이미지 업로드 미리보기 (MVP: 로컬 프리뷰)
-  - 모바일 반응형 레이아웃
-
-관련 문서: [docs/day26-plan.md](/Users/jin/Desktop/easy_ing/BlogSnap/docs/day26-plan.md)
