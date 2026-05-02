@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 
 from backend.app.api.auth import router as auth_router
+from backend.app.api.assets import router as assets_router
 from backend.app.api.drafts import router as drafts_router
 from backend.app.api.health import router as health_router
 from backend.app.api.jobs import router as jobs_router
@@ -17,6 +18,7 @@ app.add_middleware(RequestLoggingMiddleware)
 
 app.include_router(health_router)
 app.include_router(auth_router)
+app.include_router(assets_router)
 app.include_router(projects_router)
 app.include_router(drafts_router)
 app.include_router(jobs_router)
