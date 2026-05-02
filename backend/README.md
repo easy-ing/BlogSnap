@@ -44,6 +44,8 @@ uvicorn backend.app.main:app --reload --port 8000
 - `GET /v1/auth/me`
 - `POST /v1/projects`
 - `GET /v1/projects`
+- `POST /v1/assets/upload`
+- `GET /v1/assets?project_id=...`
 - `POST /v1/drafts/generate`
 - `GET /v1/drafts?project_id=...`
 - `GET /v1/drafts/recommend?project_id=...`

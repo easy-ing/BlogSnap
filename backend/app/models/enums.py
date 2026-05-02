@@ -42,3 +42,10 @@ class ScheduleStatus(str, Enum):
 class ProviderType(str, Enum):
     wordpress = "wordpress"
     tistory = "tistory"
+
+
+class AssetStatus(str, Enum):
+    UPLOADED = "UPLOADED"
+    AVAILABLE = "AVAILABLE"
+    DELETED = "DELETED"
+    ERROR = "ERROR"

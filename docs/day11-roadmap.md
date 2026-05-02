@@ -73,3 +73,9 @@
 - refresh token + logout(revoke) 인증 흐름 추가
 - auth 세션 테이블(`auth_sessions`) 도입
 - Day25 인증 데모/테스트 추가
+
+## Day27 완료 (Asset Upload Integration)
+
+- `assets` 도메인 API 추가 (`POST /v1/assets/upload`, `GET /v1/assets`)
+- 프론트 이미지 입력을 실제 업로드 + `image_asset_id` 전달로 연결
+- asset 업로드/조회 테스트 추가
