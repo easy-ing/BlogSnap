@@ -79,3 +79,10 @@
 - `assets` 도메인 API 추가 (`POST /v1/assets/upload`, `GET /v1/assets`)
 - 프론트 이미지 입력을 실제 업로드 + `image_asset_id` 전달로 연결
 - asset 업로드/조회 테스트 추가
+
+## Day28 완료 (Asset Safety Guardrails)
+
+- 업로드 파일 타입/용량 제한 추가
+- asset soft-delete API 추가 및 목록 제외 처리
+- draft 생성 시 image_asset 상태 검증 강화
+- 관련 테스트 보강

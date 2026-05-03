@@ -21,6 +21,8 @@ class Settings(BaseSettings):
     auth_secret_key: str = "change-me-dev-secret"
     auth_token_exp_minutes: int = 120
     auth_refresh_token_exp_minutes: int = 60 * 24 * 14
+    asset_max_bytes: int = 5 * 1024 * 1024
+    asset_allowed_content_types: str = "image/jpeg,image/png,image/webp,image/gif"
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 

@@ -3,6 +3,8 @@ from typing import Optional
 from uuid import UUID
 
 from sqlalchemy import or_, select
+from sqlalchemy.exc import InvalidRequestError
+from sqlalchemy.orm.exc import ObjectDeletedError
 from sqlalchemy.orm import Session
 
 from backend.app.models.entities import Job, PublishJob
@@ -36,8 +38,7 @@ class JobRunner:
         job.started_at = now
         job.updated_at = now
         self.db.commit()
-        self.db.refresh(job)
-        return job
+        return self._safe_refresh(job)
 
     def run_job_by_id(self, job_id: UUID) -> Job:
         job = self.db.get(Job, job_id)
@@ -60,8 +61,7 @@ class JobRunner:
                 publish_job.error_message = "Cancelled by user"
                 publish_job.updated_at = now
                 self.db.commit()
-                self.db.refresh(job)
-                return job
+                return self._safe_refresh(job)
 
         now = datetime.now(timezone.utc)
         if job.status == JobStatus.RETRYING and job.next_retry_at and job.next_retry_at > now:
@@ -73,7 +73,7 @@ class JobRunner:
             job.started_at = now
             job.updated_at = now
             self.db.commit()
-            self.db.refresh(job)
+            job = self._safe_refresh(job)
 
         return self._execute_with_retry(job)
 
@@ -108,7 +108,7 @@ class JobRunner:
             job.completed_at = now
             job.updated_at = now
             self.db.commit()
-            self.db.refresh(job)
+            job = self._safe_refresh(job)
             JOB_PROCESSED.labels(job_type=job.type.value, outcome="succeeded").inc()
             return job
         except Exception as exc:
@@ -128,5 +128,14 @@ class JobRunner:
                 JOB_PROCESSED.labels(job_type=job.type.value, outcome="failed").inc()
 
             self.db.commit()
+            return self._safe_refresh(job)
+
+    def _safe_refresh(self, job: Job) -> Job:
+        try:
             self.db.refresh(job)
+            return job
+        except (InvalidRequestError, ObjectDeletedError):
+            reloaded = self.db.get(Job, job.id)
+            if reloaded:
+                return reloaded
             return job
