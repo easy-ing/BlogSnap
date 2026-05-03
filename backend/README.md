@@ -179,3 +179,8 @@ Day25 auth refresh/logout demo:
 ```bash
 ./scripts/day25_auth_refresh_logout_demo.sh
 ```
+- `DELETE /v1/assets/{asset_id}`
+
+Asset env:
+- `ASSET_MAX_BYTES` (default: 5242880)
+- `ASSET_ALLOWED_CONTENT_TYPES` (comma-separated)

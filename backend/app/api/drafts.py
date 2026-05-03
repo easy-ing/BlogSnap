@@ -6,8 +6,8 @@ from sqlalchemy.orm import Session
 
 from backend.app.core.auth import ensure_project_owner, get_current_user
 from backend.app.db.session import get_db
-from backend.app.models.entities import Draft, Job, User
-from backend.app.models.enums import DraftStatus, JobStatus, JobType
+from backend.app.models.entities import Asset, Draft, Job, User
+from backend.app.models.enums import AssetStatus, DraftStatus, JobStatus, JobType
 from backend.app.schemas.drafts import (
     DraftGenerateRequest,
     DraftItemResponse,
@@ -29,6 +29,14 @@ def create_draft_generation_job(
     current_user: User = Depends(get_current_user),
 ) -> Job:
     ensure_project_owner(db=db, project_id=payload.project_id, user_id=current_user.id)
+    if payload.image_asset_id:
+        asset = db.get(Asset, payload.image_asset_id)
+        if not asset:
+            raise HTTPException(status_code=404, detail="Asset not found")
+        if asset.project_id != payload.project_id:
+            raise HTTPException(status_code=400, detail="Asset and project mismatch")
+        if asset.status != AssetStatus.AVAILABLE:
+            raise HTTPException(status_code=400, detail="Asset is not available")
 
     job = Job(
         project_id=payload.project_id,
