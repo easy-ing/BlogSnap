@@ -184,3 +184,5 @@ Day25 auth refresh/logout demo:
 Asset env:
 - `ASSET_MAX_BYTES` (default: 5242880)
 - `ASSET_ALLOWED_CONTENT_TYPES` (comma-separated)
+- `POST /v1/assets/cleanup?project_id=...`
+- `ASSET_DELETED_RETENTION_HOURS` (default: 24)

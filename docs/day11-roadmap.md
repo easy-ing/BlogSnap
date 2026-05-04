@@ -86,3 +86,9 @@
 - asset soft-delete API 추가 및 목록 제외 처리
 - draft 생성 시 image_asset 상태 검증 강화
 - 관련 테스트 보강
+
+## Day29 완료 (Asset Purge Maintenance)
+
+- `POST /v1/assets/cleanup` 추가 (project 단위)
+- retention 지난 `DELETED` asset DB/파일 purge
+- 정리 기능 테스트 추가
