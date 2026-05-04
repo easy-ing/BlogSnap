@@ -23,6 +23,7 @@ class Settings(BaseSettings):
     auth_refresh_token_exp_minutes: int = 60 * 24 * 14
     asset_max_bytes: int = 5 * 1024 * 1024
     asset_allowed_content_types: str = "image/jpeg,image/png,image/webp,image/gif"
+    asset_deleted_retention_hours: int = 24
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 

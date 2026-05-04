@@ -1,4 +1,9 @@
 import uuid
+from datetime import datetime, timedelta, timezone
+
+from sqlalchemy import select
+
+from backend.app.models.entities import Asset
 
 
 def _auth_headers(client) -> dict[str, str]:
@@ -75,3 +80,37 @@ def test_delete_asset_hides_from_list(client, db) -> None:
     list_resp = client.get("/v1/assets", headers=headers, params={"project_id": project_id})
     assert list_resp.status_code == 200
     assert list_resp.json() == []
+
+
+def test_cleanup_purges_old_deleted_assets(client, db, monkeypatch) -> None:
+    headers = _auth_headers(client)
+    project_resp = client.post("/v1/projects", json={"name": "Asset Cleanup Project"}, headers=headers)
+    assert project_resp.status_code == 200
+    project_id = project_resp.json()["id"]
+
+    upload_resp = client.post(
+        "/v1/assets/upload",
+        headers=headers,
+        files={"file": ("sample.png", b"fake-image-bytes", "image/png")},
+        data={"project_id": project_id},
+    )
+    assert upload_resp.status_code == 200
+    asset_id = upload_resp.json()["id"]
+
+    delete_resp = client.delete(f"/v1/assets/{asset_id}", headers=headers)
+    assert delete_resp.status_code == 200
+
+    asset = db.scalar(select(Asset).where(Asset.id == asset_id))
+    assert asset is not None
+    asset.updated_at = datetime.now(timezone.utc) - timedelta(hours=48)
+    db.commit()
+
+    monkeypatch.setattr("backend.app.api.assets.settings.asset_deleted_retention_hours", 24)
+    cleanup_resp = client.post("/v1/assets/cleanup", headers=headers, params={"project_id": project_id})
+    assert cleanup_resp.status_code == 200
+    payload = cleanup_resp.json()
+    assert payload["purged"] == 1
+    assert payload["retention_hours"] == 24
+
+    deleted_asset = db.scalar(select(Asset).where(Asset.id == asset_id))
+    assert deleted_asset is None

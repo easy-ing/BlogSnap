@@ -17,3 +17,9 @@ class AssetItemResponse(BaseModel):
     status: AssetStatus
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class AssetCleanupResponse(BaseModel):
+    project_id: UUID
+    retention_hours: int
+    purged: int

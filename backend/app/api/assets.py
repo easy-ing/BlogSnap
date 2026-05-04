@@ -1,9 +1,9 @@
 import mimetypes
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from uuid import UUID, uuid4
 
-from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -12,7 +12,7 @@ from backend.app.core.config import settings
 from backend.app.db.session import get_db
 from backend.app.models.entities import Asset, User
 from backend.app.models.enums import AssetStatus
-from backend.app.schemas.assets import AssetItemResponse
+from backend.app.schemas.assets import AssetCleanupResponse, AssetItemResponse
 
 
 router = APIRouter(prefix="/v1/assets", tags=["assets"])
@@ -105,3 +105,37 @@ def delete_asset(
     db.commit()
     db.refresh(asset)
     return asset
+
+
+@router.post("/cleanup", response_model=AssetCleanupResponse)
+def cleanup_deleted_assets(
+    project_id: UUID = Query(...),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> AssetCleanupResponse:
+    ensure_project_owner(db=db, project_id=project_id, user_id=current_user.id)
+    cutoff = datetime.now(timezone.utc) - timedelta(hours=settings.asset_deleted_retention_hours)
+
+    candidates = list(
+        db.scalars(
+            select(Asset).where(
+                Asset.project_id == project_id,
+                Asset.status == AssetStatus.DELETED,
+                Asset.updated_at <= cutoff,
+            )
+        )
+    )
+    purged = 0
+    for asset in candidates:
+        file_path = UPLOAD_ROOT / asset.storage_key
+        if file_path.exists():
+            file_path.unlink()
+        db.delete(asset)
+        purged += 1
+
+    db.commit()
+    return AssetCleanupResponse(
+        project_id=project_id,
+        retention_hours=settings.asset_deleted_retention_hours,
+        purged=purged,
+    )
