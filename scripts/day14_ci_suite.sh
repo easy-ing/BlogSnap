@@ -7,11 +7,16 @@ cd "$ROOT_DIR"
 DATABASE_URL="${DATABASE_URL:-postgresql+psycopg://blogsnap:blogsnap@127.0.0.1:55432/blogsnap}"
 export DATABASE_URL
 
+PYTHON_BIN="python3"
+if command -v python3.11 >/dev/null 2>&1; then
+  PYTHON_BIN="python3.11"
+fi
+
 echo "[INFO] Install dependencies"
-python3 -m pip install -r requirements.txt ruff >/tmp/day14_pip.log 2>&1 || (cat /tmp/day14_pip.log && exit 1)
+"$PYTHON_BIN" -m pip install -r requirements.txt ruff >/tmp/day14_pip.log 2>&1 || (cat /tmp/day14_pip.log && exit 1)
 
 echo "[INFO] Prepare test database schema"
-python3 - <<'PY'
+"$PYTHON_BIN" - <<'PY'
 import os
 import time
 from pathlib import Path
@@ -37,14 +42,14 @@ else:
 PY
 
 echo "[INFO] Lint (ruff critical rules)"
-python3 -m ruff check --select E9,F63,F7,F82 .
+"$PYTHON_BIN" -m ruff check --select E9,F63,F7,F82 .
 
 echo "[INFO] Run tests"
 export TEST_DB_RESET_MODE=skip
-PYTHONPATH=. python3 -m pytest -q tests
+PYTHONPATH=. "$PYTHON_BIN" -m pytest -q tests
 
 echo "[INFO] Compile checks"
-python3 -m compileall -q backend tests monitoring blogsnap app.py main.py
+"$PYTHON_BIN" -m compileall -q backend tests monitoring blogsnap app.py main.py
 
 echo "[INFO] Env checks"
 ./scripts/day12_env_check.sh .env.example

@@ -186,3 +186,8 @@ Asset env:
 - `ASSET_ALLOWED_CONTENT_TYPES` (comma-separated)
 - `POST /v1/assets/cleanup?project_id=...`
 - `ASSET_DELETED_RETENTION_HOURS` (default: 24)
+
+Day30 cleanup automation:
+```bash
+./scripts/day30_asset_cleanup_run.sh 24
+```
