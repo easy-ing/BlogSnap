@@ -1,5 +1,5 @@
 import mimetypes
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 from pathlib import Path
 from uuid import UUID, uuid4
 
@@ -13,6 +13,7 @@ from backend.app.db.session import get_db
 from backend.app.models.entities import Asset, User
 from backend.app.models.enums import AssetStatus
 from backend.app.schemas.assets import AssetCleanupResponse, AssetItemResponse
+from backend.app.services.asset_cleanup import purge_deleted_assets_for_project
 
 
 router = APIRouter(prefix="/v1/assets", tags=["assets"])
@@ -114,26 +115,7 @@ def cleanup_deleted_assets(
     current_user: User = Depends(get_current_user),
 ) -> AssetCleanupResponse:
     ensure_project_owner(db=db, project_id=project_id, user_id=current_user.id)
-    cutoff = datetime.now(timezone.utc) - timedelta(hours=settings.asset_deleted_retention_hours)
-
-    candidates = list(
-        db.scalars(
-            select(Asset).where(
-                Asset.project_id == project_id,
-                Asset.status == AssetStatus.DELETED,
-                Asset.updated_at <= cutoff,
-            )
-        )
-    )
-    purged = 0
-    for asset in candidates:
-        file_path = UPLOAD_ROOT / asset.storage_key
-        if file_path.exists():
-            file_path.unlink()
-        db.delete(asset)
-        purged += 1
-
-    db.commit()
+    purged = purge_deleted_assets_for_project(db, project_id, retention_hours=settings.asset_deleted_retention_hours)
     return AssetCleanupResponse(
         project_id=project_id,
         retention_hours=settings.asset_deleted_retention_hours,

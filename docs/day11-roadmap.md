@@ -92,3 +92,9 @@
 - `POST /v1/assets/cleanup` 추가 (project 단위)
 - retention 지난 `DELETED` asset DB/파일 purge
 - 정리 기능 테스트 추가
+
+## Day30 완료 (Asset Cleanup Automation)
+
+- asset purge 공통 서비스 분리
+- 전체 프로젝트 일괄 정리 실행 스크립트 추가
+- 서비스 레벨 테스트 추가
