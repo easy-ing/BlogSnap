@@ -6,10 +6,14 @@ cd "$ROOT_DIR"
 
 RETENTION_HOURS="${1:-24}"
 export RETENTION_HOURS
+PYTHON_BIN="python3"
+if command -v python3.11 >/dev/null 2>&1; then
+  PYTHON_BIN="python3.11"
+fi
 
 echo "[INFO] running asset cleanup for all projects (retention_hours=${RETENTION_HOURS})"
 
-PYTHONPATH=. python3 - <<'PY'
+PYTHONPATH=. "$PYTHON_BIN" - <<'PY'
 import json
 import os
 
