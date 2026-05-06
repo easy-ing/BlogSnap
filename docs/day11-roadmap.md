@@ -98,3 +98,9 @@
 - asset purge 공통 서비스 분리
 - 전체 프로젝트 일괄 정리 실행 스크립트 추가
 - 서비스 레벨 테스트 추가
+
+## Day31 완료 (Scheduled Asset Cleanup Workflow)
+
+- Day30 cleanup 스크립트의 수동/정기 실행 workflow 추가
+- retention_hours 입력 지원
+- DB schema 준비 후 자동 cleanup 실행 경로 확립
