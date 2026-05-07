@@ -1,0 +1,83 @@
+name: Day32 Asset Cleanup Report
+
+on:
+  workflow_dispatch:
+    inputs:
+      retention_hours:
+        description: "Retention hours for DELETED assets"
+        required: false
+        default: "24"
+
+jobs:
+  cleanup-report:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: blogsnap
+          POSTGRES_USER: blogsnap
+          POSTGRES_PASSWORD: blogsnap
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U blogsnap -d blogsnap"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 20
+    env:
+      DATABASE_URL: postgresql+psycopg://blogsnap:blogsnap@127.0.0.1:5432/blogsnap
+      PIP_DISABLE_PIP_VERSION_CHECK: "1"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: requirements.txt
+
+      - name: Install dependencies
+        run: python3.11 -m pip install -r requirements.txt
+
+      - name: Prepare schema
+        run: |
+          python3.11 - <<'PY'
+          import os
+          import time
+          from pathlib import Path
+          import psycopg
+
+          db_url = os.environ["DATABASE_URL"]
+          conn_url = db_url.replace("postgresql+psycopg://", "postgresql://", 1)
+          sql = Path("db/migrations/0001_init.sql").read_text(encoding="utf-8")
+
+          for _ in range(40):
+              try:
+                  with psycopg.connect(conn_url, autocommit=True) as conn:
+                      with conn.cursor() as cur:
+                          cur.execute("DROP SCHEMA IF EXISTS public CASCADE;")
+                          cur.execute("CREATE SCHEMA public;")
+                          cur.execute(sql)
+                  break
+              except Exception:
+                  time.sleep(1)
+          else:
+              raise SystemExit("database is not reachable")
+          PY
+
+      - name: Run cleanup and emit report
+        run: |
+          chmod +x scripts/day30_asset_cleanup_run.sh scripts/day32_asset_cleanup_report.sh
+          RETENTION="${{ github.event.inputs.retention_hours }}"
+          if [ -z "$RETENTION" ]; then RETENTION=24; fi
+          ./scripts/day32_asset_cleanup_report.sh "$RETENTION" tmp/reports
+
+      - name: Upload cleanup report artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: asset-cleanup-report
+          path: tmp/reports/*.json
+          if-no-files-found: error
