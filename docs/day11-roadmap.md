@@ -104,3 +104,8 @@
 - Day30 cleanup 스크립트의 수동/정기 실행 workflow 추가
 - retention_hours 입력 지원
 - DB schema 준비 후 자동 cleanup 실행 경로 확립
+
+## Day32 완료 (Cleanup Report Artifact)
+
+- cleanup 결과 JSON 리포트 스크립트 추가
+- GitHub Actions artifact 업로드 workflow 추가

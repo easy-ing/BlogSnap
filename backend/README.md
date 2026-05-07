@@ -191,3 +191,8 @@ Day30 cleanup automation:
 ```bash
 ./scripts/day30_asset_cleanup_run.sh 24
 ```
+
+Day32 cleanup report generation:
+```bash
+./scripts/day32_asset_cleanup_report.sh 24 tmp/reports
+```
