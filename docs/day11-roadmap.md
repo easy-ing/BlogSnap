@@ -109,3 +109,9 @@
 
 - cleanup 결과 JSON 리포트 스크립트 추가
 - GitHub Actions artifact 업로드 workflow 추가
+
+## Day33 완료 (Cleanup Report Summary Hardening)
+
+- cleanup 결과 Markdown 요약 리포트 추가
+- workflow Step Summary 게시
+- JSON + Markdown artifact 동시 업로드

@@ -196,3 +196,9 @@ Day32 cleanup report generation:
 ```bash
 ./scripts/day32_asset_cleanup_report.sh 24 tmp/reports
 ```
+
+Day33 cleanup report hardening:
+```bash
+./scripts/day32_asset_cleanup_report.sh 24 tmp/reports
+```
+- 생성물: `asset-cleanup-<ts>.json`, `asset-cleanup-<ts>.md`
