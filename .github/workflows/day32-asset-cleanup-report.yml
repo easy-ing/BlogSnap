@@ -75,9 +75,16 @@ jobs:
           if [ -z "$RETENTION" ]; then RETENTION=24; fi
           ./scripts/day32_asset_cleanup_report.sh "$RETENTION" tmp/reports
 
+      - name: Publish Step Summary
+        run: |
+          LATEST_MD=$(ls -1t tmp/reports/asset-cleanup-*.md | head -n 1)
+          cat "$LATEST_MD" >> "$GITHUB_STEP_SUMMARY"
+
       - name: Upload cleanup report artifact
         uses: actions/upload-artifact@v4
         with:
           name: asset-cleanup-report
-          path: tmp/reports/*.json
+          path: |
+            tmp/reports/*.json
+            tmp/reports/*.md
           if-no-files-found: error
