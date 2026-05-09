@@ -19,7 +19,11 @@ fi
 
 read_env_key() {
   local key="$1"
-  rg "^${key}=" "$ENV_FILE" | tail -n1 | cut -d'=' -f2- || true
+  if command -v rg >/dev/null 2>&1; then
+    rg "^${key}=" "$ENV_FILE" | tail -n1 | cut -d'=' -f2- || true
+  else
+    grep "^${key}=" "$ENV_FILE" | tail -n1 | cut -d'=' -f2- || true
+  fi
 }
 
 publish_mode="$(read_env_key WORKER_PUBLISH_MODE | tr '[:upper:]' '[:lower:]')"
