@@ -115,3 +115,8 @@
 - cleanup 결과 Markdown 요약 리포트 추가
 - workflow Step Summary 게시
 - JSON + Markdown artifact 동시 업로드
+
+## Day34 완료 (Deploy Dry Run Automation)
+
+- 배포 핵심 게이트 자동 점검 스크립트 추가
+- dry-run 결과 리포트 생성
