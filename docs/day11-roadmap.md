@@ -120,3 +120,9 @@
 
 - 배포 핵심 게이트 자동 점검 스크립트 추가
 - dry-run 결과 리포트 생성
+
+## Day35 완료 (Release Candidate Gate)
+
+- RC 승인용 원클릭 게이트 스크립트 추가
+- dry-run + frontend build + compile 검증 통합
+- RC 게이트 리포트 자동 생성
