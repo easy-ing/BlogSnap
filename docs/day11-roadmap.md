@@ -126,3 +126,9 @@
 - RC 승인용 원클릭 게이트 스크립트 추가
 - dry-run + frontend build + compile 검증 통합
 - RC 게이트 리포트 자동 생성
+
+## Day36 완료 (RC Gate Machine-Readable Status)
+
+- RC 게이트 JSON 결과파일 추가
+- 단계별 통과/실패/스킵 상태 기록
+- 실패 시 즉시 JSON 남기고 종료하도록 보강
