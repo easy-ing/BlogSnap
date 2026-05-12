@@ -132,3 +132,9 @@
 - RC 게이트 JSON 결과파일 추가
 - 단계별 통과/실패/스킵 상태 기록
 - 실패 시 즉시 JSON 남기고 종료하도록 보강
+
+## Day37 완료 (Release Decision Gate)
+
+- Day36 RC JSON 리포트 기준 릴리즈 승인 스크립트 추가
+- 리포트 최신성(MAX_AGE_HOURS) 검증으로 stale 승인 방지
+- status/step 결과 기반 pass/fail 자동 판정
