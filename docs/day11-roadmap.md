@@ -138,3 +138,9 @@
 - Day36 RC JSON 리포트 기준 릴리즈 승인 스크립트 추가
 - 리포트 최신성(MAX_AGE_HOURS) 검증으로 stale 승인 방지
 - status/step 결과 기반 pass/fail 자동 판정
+
+## Day38 완료 (Deploy Pipeline Finalization)
+
+- dev/staging/prod 배포 변수 매트릭스 문서 추가
+- GitHub Environments/Secrets 구성 가이드 추가
+- 마이그레이션 check/apply 모드 지원 배포 게이트 스크립트 추가
