@@ -144,3 +144,9 @@
 - dev/staging/prod 배포 변수 매트릭스 문서 추가
 - GitHub Environments/Secrets 구성 가이드 추가
 - 마이그레이션 check/apply 모드 지원 배포 게이트 스크립트 추가
+
+## Day39 완료 (Provider Rehearsal)
+
+- 워드프레스/티스토리 provider 키 점검 리허설 스크립트 추가
+- dry-run/mock 리허설과 real-run(명시 승인) 모드 분리
+- placeholder 감지 및 리허설 리포트 생성 추가
