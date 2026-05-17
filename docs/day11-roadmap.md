@@ -156,3 +156,9 @@
 - API/worker/alert 전달 기준 SLI/SLO 초안 문서 추가
 - alert 임계치/노이즈 튜닝 가이드 추가
 - 모니터링 설정 및 silence window 자동 점검 스크립트 추가
+
+## Day41 완료 (Recovery Gameday)
+
+- DB/Queue/Provider 복구 시나리오 리허설 스크립트 추가
+- 게임데이 런북 문서 추가
+- 시나리오별 실행 및 리포트 생성 자동화
