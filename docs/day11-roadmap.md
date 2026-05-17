@@ -150,3 +150,9 @@
 - 워드프레스/티스토리 provider 키 점검 리허설 스크립트 추가
 - dry-run/mock 리허설과 real-run(명시 승인) 모드 분리
 - placeholder 감지 및 리허설 리포트 생성 추가
+
+## Day40 완료 (Monitoring Tuning)
+
+- API/worker/alert 전달 기준 SLI/SLO 초안 문서 추가
+- alert 임계치/노이즈 튜닝 가이드 추가
+- 모니터링 설정 및 silence window 자동 점검 스크립트 추가
