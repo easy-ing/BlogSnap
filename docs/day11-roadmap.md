@@ -186,3 +186,9 @@
 - Day42~Day44 리포트 통합 markdown/json 생성 스크립트 추가
 - `release-health-latest.md/json` 최신 포인터 파일 자동 갱신
 - 릴리즈 헬스 공유 가이드 문서 추가
+
+## Day46 완료 (Alert Noise Quality Review)
+
+- alert relay `/stats` 기반 노이즈/성공률 리뷰 스크립트 추가
+- markdown/json 리포트 동시 생성 및 튜닝 추천 자동화
+- alert noise 해석 가이드 문서 추가
