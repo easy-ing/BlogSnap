@@ -192,3 +192,9 @@
 - alert relay `/stats` 기반 노이즈/성공률 리뷰 스크립트 추가
 - markdown/json 리포트 동시 생성 및 튜닝 추천 자동화
 - alert noise 해석 가이드 문서 추가
+
+## Day47 완료 (Incident Watcher Automation)
+
+- release-health/day46 신호 기반 incident watcher 스크립트 추가
+- incident summary markdown/json 자동 생성
+- incident 감지 시 Day41 복구 시나리오 자동 실행 연계
