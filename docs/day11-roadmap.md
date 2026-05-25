@@ -198,3 +198,9 @@
 - release-health/day46 신호 기반 incident watcher 스크립트 추가
 - incident summary markdown/json 자동 생성
 - incident 감지 시 Day41 복구 시나리오 자동 실행 연계
+
+## Day48 완료 (Deploy Approval Automation)
+
+- release-health/day47/day42 신호 결합 배포 승인 게이트 스크립트 추가
+- 승인 결과 markdown/json 및 latest 포인터 자동 생성
+- 차단 사유(block reasons) 자동 기록 정책 추가
