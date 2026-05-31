@@ -222,3 +222,9 @@
 - Day50 결과 기반 운영 상태 배지(svg) 생성 스크립트 추가
 - md/json 요약 및 latest 포인터 파일 자동 갱신
 - 상태 배지 운영 가이드 문서 추가
+
+## Day52 완료 (Ops Report Manifest)
+
+- Day45~Day51 최신 리포트 포인터를 수집하는 manifest 스크립트 추가
+- manifest markdown/json 및 latest 포인터 자동 생성
+- manifest 상태/누락 항목 확인 가이드 문서 추가
