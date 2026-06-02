@@ -77,6 +77,12 @@ cp .env.example .env
 - `BLOG_APP_PASSWORD`
 - `DEFAULT_TAGS`
 
+### 2.5) 배포 준비 점검
+```bash
+chmod +x ./scripts/check_deploy_ready.sh
+./scripts/check_deploy_ready.sh
+```
+
 ### 3) 앱 실행
 ```bash
 streamlit run app.py
