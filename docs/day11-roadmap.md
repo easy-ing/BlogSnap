@@ -234,3 +234,9 @@
 - `check_deploy_ready.sh`와 운영 리포트 신호를 결합한 readiness 스크립트 추가
 - Day52 manifest, Day48 approval, Day51 ops status 기반 `ready`/`blocked` 판정
 - markdown/json/latest readiness 리포트 및 판단 기준 가이드 추가
+
+## Day54 완료 (Readiness Refresh)
+
+- Day45 release-health 상태 추출 오탐 수정
+- Day45/47/48/52/53 최신 신호 재계산 스크립트 추가
+- 최종 readiness decision 및 block reasons 요약 리포트 생성

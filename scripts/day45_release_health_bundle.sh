@@ -22,7 +22,14 @@ pick_latest() {
 extract_status_line() {
   local path="$1"
   local line
-  line="$(grep -E '^\[OK\]|FAILED|passed|completed' "$path" | tail -n1 || true)"
+  line="$(grep -E '^\[OK\]|^\[ERROR\]|^\[FAIL\]|^- \[ \].*FAILED' "$path" | tail -n1 || true)"
+  if [[ -z "$line" ]] && grep -q '^## Status Snapshot' "$path"; then
+    if grep -qE '^- .*FAILED|^\[ERROR\]|^\[FAIL\]|^- \[ \].*FAILED' "$path"; then
+      line="[ERROR] status snapshot contains failure signal"
+    else
+      line="[OK] status snapshot has no failures"
+    fi
+  fi
   if [[ -z "$line" ]]; then
     line="(status line not found)"
   fi
@@ -63,7 +70,7 @@ fi
 
 OVERALL="ok"
 for s in "$STATUS_D42" "$STATUS_D43" "$STATUS_D44" "$STATUS_D41" "$STATUS_MON"; do
-  if [[ "$s" == *"FAILED"* || "$s" == *"failed"* ]]; then
+  if [[ "$s" != \[OK\]* ]]; then
     OVERALL="needs_attention"
     break
   fi
