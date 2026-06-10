@@ -252,3 +252,9 @@
 - Day55 release lock을 최신 HEAD 기준으로 재생성하는 핸드오프 스크립트 추가
 - lock commit/branch 및 readiness/source checksum 재검증
 - markdown/json/latest 배포 인수인계 패키지 생성
+
+## Day57 완료 (Release Evidence Index)
+
+- Day56 handoff를 갱신하고 배포 승인 evidence 인덱스 생성
+- Day53/55/56/52/51/48/release-health 최신 리포트 수집
+- handoff commit/branch와 현재 HEAD 일치 검증
