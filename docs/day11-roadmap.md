@@ -258,3 +258,9 @@
 - Day56 handoff를 갱신하고 배포 승인 evidence 인덱스 생성
 - Day53/55/56/52/51/48/release-health 최신 리포트 수집
 - handoff commit/branch와 현재 HEAD 일치 검증
+
+## Day58 완료 (Deployment Execution Receipt)
+
+- Day57 evidence 기반 배포 실행 receipt 생성 스크립트 추가
+- dry-run/execute 모드 및 execute 확인 가드 추가
+- markdown/json/latest receipt 및 운영 가이드 생성
