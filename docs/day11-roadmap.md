@@ -270,3 +270,9 @@
 - Day58 deployment receipt를 최신 HEAD 기준으로 자동 갱신하는 검증 스크립트 추가
 - receipt/evidence/git branch/commit 및 deploy action/target 일치성 점검
 - markdown/json/latest verification 리포트 및 운영 가이드 생성
+
+## Day60 완료 (Post-Deploy Smoke Check)
+
+- Day59 verification을 최신 HEAD 기준으로 자동 갱신하는 post-deploy smoke 스크립트 추가
+- health/readiness/auth/project/queue/metrics 핵심 런타임 체크 자동화
+- markdown/json/latest smoke 리포트 및 strict gate 옵션 문서화
