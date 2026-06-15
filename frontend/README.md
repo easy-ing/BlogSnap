@@ -8,7 +8,13 @@ npm install
 npm run dev
 ```
 
-기본 `/api` 프록시는 `http://localhost:8025`를 가리킵니다.
+기본 `/api` 프록시는 `http://localhost:8000` 백엔드를 가리킵니다.
+
+백엔드가 다른 포트에서 실행 중이면 아래처럼 지정할 수 있습니다.
+
+```bash
+VITE_API_PROXY_TARGET=http://localhost:8000 npm run dev
+```
 
 ## Day27
 
