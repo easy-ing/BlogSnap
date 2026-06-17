@@ -88,6 +88,24 @@ chmod +x ./scripts/check_deploy_ready.sh
 streamlit run app.py
 ```
 
+### 3.1) React 프론트 미리보기
+백엔드 API는 `http://localhost:8000`, 실제 웹 화면은 `http://localhost:5173`에서 확인합니다.
+
+```bash
+docker compose -f docker-compose.dev.yml up -d postgres api worker
+cd frontend
+npm install
+npm run dev
+```
+
+브라우저에서는 아래 주소를 엽니다.
+
+```text
+http://localhost:5173/
+```
+
+참고로 `http://localhost:8000/`은 백엔드 API root라서 `Not Found`가 보일 수 있습니다. API 상태 확인은 `http://localhost:8000/health`, API 문서는 `http://localhost:8000/docs`를 사용합니다.
+
 ### 4) 로컬 DB 마이그레이션 검증
 ```bash
 docker compose -f docker-compose.dev.yml up -d postgres
