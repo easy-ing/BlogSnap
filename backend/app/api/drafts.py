@@ -127,12 +127,23 @@ def regenerate_draft(
         raise HTTPException(status_code=404, detail="Draft not found")
     ensure_project_owner(db=db, project_id=draft.project_id, user_id=current_user.id)
 
+    source_job = db.get(Job, draft.source_job_id) if draft.source_job_id else None
+    source_payload = (source_job.request_payload if source_job else None) or {}
+    request_payload = {
+        "draft_id": str(draft_id),
+        "keyword": source_payload.get("keyword", draft.keyword),
+        "sentiment": source_payload.get("sentiment", draft.sentiment),
+        "post_type": source_payload.get("post_type", draft.post_type.value),
+        "draft_count": source_payload.get("draft_count", 3),
+        "image_asset_id": source_payload.get("image_asset_id"),
+    }
+
     job = Job(
         project_id=draft.project_id,
         type=JobType.draft_regenerate,
         status=JobStatus.PENDING,
         idempotency_key=payload.idempotency_key,
-        request_payload={"draft_id": str(draft_id)},
+        request_payload=request_payload,
     )
     db.add(job)
     db.commit()

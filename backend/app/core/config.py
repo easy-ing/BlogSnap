@@ -24,6 +24,9 @@ class Settings(BaseSettings):
     asset_max_bytes: int = 5 * 1024 * 1024
     asset_allowed_content_types: str = "image/jpeg,image/png,image/webp,image/gif"
     asset_deleted_retention_hours: int = 24
+    worker_draft_mode: str = "mock"
+    gemini_api_key: str = ""
+    gemini_model: str = "gemini-2.5-flash"
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 

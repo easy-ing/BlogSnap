@@ -1,13 +1,18 @@
 import uuid
 from datetime import datetime
+from pathlib import Path
 
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from backend.app.core.config import settings
-from backend.app.models.entities import Draft, Job, PublishJob
+from backend.app.models.entities import Asset, Draft, Job, PublishJob
 from backend.app.models.enums import DraftStatus, JobType, ProviderType, PublishStatus, ScheduleStatus
+from backend.app.services.gemini_writer import generate_drafts
 from backend.app.worker.publishers import publish_to_tistory, publish_to_wordpress
+
+
+UPLOAD_ROOT = Path("tmp/uploads")
 
 
 def _next_version_no(db: Session, project_id: uuid.UUID) -> int:
@@ -15,7 +20,7 @@ def _next_version_no(db: Session, project_id: uuid.UUID) -> int:
     return (value or 0) + 1
 
 
-def _build_markdown(keyword: str, sentiment: int, post_type: str, variant_no: int) -> str:
+def _build_mock_markdown(keyword: str, sentiment: int, post_type: str, variant_no: int) -> str:
     sentiment_text = {
         -2: "강한 부정",
         -1: "약한 부정",
@@ -36,6 +41,25 @@ def _build_markdown(keyword: str, sentiment: int, post_type: str, variant_no: in
     )
 
 
+def _load_image(db: Session, image_asset_id: str | None) -> tuple[bytes | None, str | None]:
+    if not image_asset_id:
+        return None, None
+    asset = db.get(Asset, uuid.UUID(image_asset_id))
+    if not asset:
+        return None, None
+    file_path = UPLOAD_ROOT / asset.storage_key
+    if not file_path.exists():
+        return None, None
+    return file_path.read_bytes(), asset.content_type
+
+
+def _generate_mock_drafts(keyword: str, sentiment: int, post_type: str, draft_count: int) -> list[dict[str, str]]:
+    return [
+        {"title": f"{keyword} {variant_no}안", "markdown": _build_mock_markdown(keyword, sentiment, post_type, variant_no)}
+        for variant_no in range(1, draft_count + 1)
+    ]
+
+
 def _execute_draft_job(db: Session, job: Job) -> dict:
     payload = job.request_payload or {}
     keyword = str(payload.get("keyword", "키워드"))
@@ -44,20 +68,36 @@ def _execute_draft_job(db: Session, job: Job) -> dict:
     draft_count = int(payload.get("draft_count", 3))
     draft_count = 2 if draft_count < 2 else 3 if draft_count > 3 else draft_count
 
+    mode = settings.worker_draft_mode.strip().lower()
+    if mode == "gemini":
+        image_bytes, image_mime_type = _load_image(db, payload.get("image_asset_id"))
+        drafts_data = generate_drafts(
+            api_key=settings.gemini_api_key,
+            model=settings.gemini_model,
+            keyword=keyword,
+            post_type=post_type,
+            sentiment=sentiment,
+            draft_count=draft_count,
+            image_bytes=image_bytes,
+            image_mime_type=image_mime_type,
+        )
+    elif mode == "mock":
+        drafts_data = _generate_mock_drafts(keyword, sentiment, post_type, draft_count)
+    else:
+        raise ValueError(f"Unsupported worker draft mode: {settings.worker_draft_mode}")
+
     version_no = _next_version_no(db, job.project_id)
     created_ids: list[str] = []
 
-    for variant_no in range(1, draft_count + 1):
-        title = f"{keyword} {variant_no}안"
-        markdown = _build_markdown(keyword, sentiment, post_type, variant_no)
+    for variant_no, item in enumerate(drafts_data, start=1):
         draft = Draft(
             project_id=job.project_id,
             source_job_id=job.id,
             post_type=post_type,
             keyword=keyword,
             sentiment=sentiment,
-            title=title,
-            markdown=markdown,
+            title=item["title"],
+            markdown=item["markdown"],
             version_no=version_no,
             variant_no=variant_no,
             status=DraftStatus.GENERATED,
