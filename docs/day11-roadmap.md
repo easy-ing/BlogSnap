@@ -276,3 +276,15 @@
 - Day59 verification을 최신 HEAD 기준으로 자동 갱신하는 post-deploy smoke 스크립트 추가
 - health/readiness/auth/project/queue/metrics 핵심 런타임 체크 자동화
 - markdown/json/latest smoke 리포트 및 strict gate 옵션 문서화
+
+## Day61 완료 (Preview Readiness Check)
+
+- 프론트 preview URL과 백엔드 API URL 혼동 방지용 readiness 스크립트 추가
+- Vite proxy, `/api/health`, backend `/health`, frontend root, build 검증 자동화
+- markdown/json/latest preview readiness 리포트 및 테스트 가이드 문서화
+
+## Day62 완료 (UAT Session Packet)
+
+- Day61 preview readiness 기반 사용자 수락 테스트 세션 패킷 생성 스크립트 추가
+- 로그인/프로젝트/초고 생성/재생성/선택/발행 수동 테스트 절차와 기대 결과 문서화
+- markdown/json/latest UAT 리포트 및 이슈 기록 템플릿 생성
