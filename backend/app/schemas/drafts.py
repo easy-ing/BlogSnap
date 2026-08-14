@@ -24,6 +24,7 @@ class DraftItemResponse(BaseModel):
     id: UUID
     project_id: UUID
     title: str
+    markdown: str
     keyword: str
     post_type: PostType
     sentiment: int

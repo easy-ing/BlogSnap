@@ -23,6 +23,7 @@ type Job = {
 type Draft = {
   id: string;
   title: string;
+  markdown: string;
   keyword: string;
   post_type: PostType;
   sentiment: number;
@@ -63,7 +64,69 @@ const POST_TYPE_LABEL: Record<PostType, string> = {
   impression: "소감문",
 };
 
+const STATUS_LABEL: Record<string, string> = {
+  GENERATED: "생성됨",
+  SELECTED: "선택됨",
+  ARCHIVED: "보관됨",
+};
+
 const API_BASE = import.meta.env.VITE_API_BASE ?? "/api";
+
+function markdownPreview(markdown: string): string {
+  const plain = markdown
+    .split("\n")
+    .map((line) => line.trim())
+    .filter((line) => line && !line.startsWith("#") && !line.startsWith("-"))
+    .join(" ")
+    .replace(/[*_`]/g, "")
+    .trim();
+  return plain.length > 90 ? `${plain.slice(0, 90)}…` : plain;
+}
+
+function isBulletList(lines: string[]): boolean {
+  return lines.length > 0 && lines.every((line) => /^[-*]\s+/.test(line.trim()));
+}
+
+function BulletList({ lines, keyPrefix }: { lines: string[]; keyPrefix: string }) {
+  return (
+    <ul>
+      {lines.map((line, li) => (
+        <li key={`${keyPrefix}-${li}`}>{line.trim().replace(/^[-*]\s+/, "")}</li>
+      ))}
+    </ul>
+  );
+}
+
+function MarkdownBlock({ markdown }: { markdown: string }) {
+  const blocks = markdown.split(/\n{2,}/).map((block) => block.trim()).filter(Boolean);
+  return (
+    <div className="markdown-body">
+      {blocks.map((block, index) => {
+        const lines = block.split("\n");
+        const headingMatch = lines[0].match(/^(#{1,3})\s+(.*)$/);
+        if (headingMatch) {
+          const level = headingMatch[1].length;
+          const headingText = headingMatch[2];
+          const restLines = lines.slice(1).filter((line) => line.trim());
+          return (
+            <div key={index}>
+              {level === 1 ? <h4>{headingText}</h4> : <h5>{headingText}</h5>}
+              {restLines.length === 0 ? null : isBulletList(restLines) ? (
+                <BulletList lines={restLines} keyPrefix={`${index}-rest`} />
+              ) : (
+                <p>{restLines.join(" ")}</p>
+              )}
+            </div>
+          );
+        }
+        if (isBulletList(lines)) {
+          return <BulletList key={index} lines={lines} keyPrefix={`${index}`} />;
+        }
+        return <p key={index}>{block}</p>;
+      })}
+    </div>
+  );
+}
 
 export function App() {
   const [email, setEmail] = useState("demo@blogsnap.dev");
@@ -71,7 +134,7 @@ export function App() {
   const [token, setToken] = useState<string>("");
   const [refreshToken, setRefreshToken] = useState<string>("");
 
-  const [projectName, setProjectName] = useState("Day27 Frontend Demo");
+  const [projectName, setProjectName] = useState("내 블로그 프로젝트");
   const [projectId, setProjectId] = useState<string>("");
   const [projects, setProjects] = useState<Project[]>([]);
 
@@ -84,6 +147,7 @@ export function App() {
 
   const [drafts, setDrafts] = useState<Draft[]>([]);
   const [selectedDraftId, setSelectedDraftId] = useState<string>("");
+  const [expandedDraftId, setExpandedDraftId] = useState<string>("");
   const [publishResult, setPublishResult] = useState<PublishResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("로그인 후 프로젝트를 만들고 초고를 생성하세요.");
@@ -339,10 +403,15 @@ export function App() {
 
   return (
     <main className="page">
-      <section className="card">
-        <h1>BlogSnap Day27 Frontend</h1>
-        <p className="description">글 유형 선택 -&gt; 키워드/이미지/긍부정 설정 -&gt; 초고 2~3개 생성 -&gt; 선택 -&gt; 자동 발행</p>
+      <header className="hero">
+        <p className="brand-kicker">AI 블로그 자동화</p>
+        <h1>BlogSnap</h1>
+        <p className="description">글 유형 선택 → 키워드/이미지/긍부정 설정 → 초고 2~3개 생성 → 선택 → 자동 발행</p>
+      </header>
 
+      <section className="card">
+        <p className="step-kicker">STEP 1</p>
+        <h2>로그인 &amp; 프로젝트</h2>
         <div className="row two">
           <label>
             이메일
@@ -376,6 +445,7 @@ export function App() {
       </section>
 
       <section className="card">
+        <p className="step-kicker">STEP 2</p>
         <h2>초고 생성</h2>
         <div className="row three">
           <label>
@@ -415,33 +485,60 @@ export function App() {
         </div>
 
         <label>
-          사진 첨부 (Day27: 업로드 후 초고 생성에 연결)
+          사진 첨부 (선택)
           <input type="file" accept="image/*" onChange={onImageChange} />
         </label>
-        {imagePreview ? <img className="preview" src={imagePreview} alt="preview" /> : null}
+        {imagePreview ? <img className="preview" src={imagePreview} alt="업로드한 사진 미리보기" /> : null}
 
         <button onClick={generateDrafts} disabled={loading || !token}>초고 생성 + 작업 실행</button>
       </section>
 
       <section className="card">
-        <h2>초고 목록</h2>
-        <div className="draft-grid">
-          {drafts.map((draft) => (
-            <article key={draft.id} className={`draft ${selectedDraftId === draft.id ? "selected" : ""}`}>
-              <h3>{draft.title}</h3>
-              <p>{POST_TYPE_LABEL[draft.post_type]} / 감정 {draft.sentiment} / v{draft.version_no}-{draft.variant_no}</p>
-              <p>상태: {draft.status}</p>
-              <div className="row two">
-                <button onClick={() => selectDraft(draft.id)} disabled={loading}>이 초고 선택</button>
-                <button onClick={() => regenerate(draft.id)} disabled={loading}>다른 방향 재생성</button>
-              </div>
-            </article>
-          ))}
-        </div>
-        <button onClick={publish} disabled={loading || !selectedDraftId}>선택 초고 자동 업로드</button>
+        <p className="step-kicker">STEP 3</p>
+        <h2>초고 선택</h2>
+        {drafts.length === 0 ? (
+          <p className="empty-hint">아직 생성된 초고가 없어요. 위에서 먼저 초고를 생성해보세요.</p>
+        ) : (
+          <div className="draft-grid">
+            {drafts.map((draft) => {
+              const isExpanded = expandedDraftId === draft.id;
+              return (
+                <article key={draft.id} className={`draft ${selectedDraftId === draft.id ? "selected" : ""}`}>
+                  <div className="draft-head">
+                    <h3>{draft.title}</h3>
+                    <span className={`badge badge-${draft.status.toLowerCase()}`}>
+                      {STATUS_LABEL[draft.status] ?? draft.status}
+                    </span>
+                  </div>
+                  <p className="draft-meta">
+                    {POST_TYPE_LABEL[draft.post_type]} · 감정 {draft.sentiment} · v{draft.version_no}-{draft.variant_no}
+                  </p>
+                  {isExpanded ? (
+                    <MarkdownBlock markdown={draft.markdown} />
+                  ) : (
+                    <p className="draft-preview">{markdownPreview(draft.markdown) || "본문 내용이 비어 있습니다."}</p>
+                  )}
+                  <button
+                    type="button"
+                    className="btn-link"
+                    onClick={() => setExpandedDraftId(isExpanded ? "" : draft.id)}
+                  >
+                    {isExpanded ? "본문 접기" : "본문 전체 보기"}
+                  </button>
+                  <div className="row two">
+                    <button onClick={() => selectDraft(draft.id)} disabled={loading}>이 초고 선택</button>
+                    <button className="btn-secondary" onClick={() => regenerate(draft.id)} disabled={loading}>다른 방향 재생성</button>
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+        )}
+        <button className="btn-cta" onClick={publish} disabled={loading || !selectedDraftId}>선택 초고 자동 업로드</button>
       </section>
 
       <section className="card">
+        <p className="step-kicker">STEP 4</p>
         <h2>결과</h2>
         <p>{message}</p>
         {publishResult ? (

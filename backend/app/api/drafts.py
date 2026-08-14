@@ -93,6 +93,7 @@ def recommend_draft(
             id=item.draft.id,
             project_id=item.draft.project_id,
             title=item.draft.title,
+            markdown=item.draft.markdown,
             keyword=item.draft.keyword,
             post_type=item.draft.post_type,
             sentiment=item.draft.sentiment,

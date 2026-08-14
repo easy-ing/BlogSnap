@@ -23,15 +23,21 @@ body { margin: 0; }
   box-shadow: 0 8px 24px rgba(10, 37, 64, 0.08);
 }
 
-h1, h2, h3 { margin: 0 0 12px; }
+h1, h2, h3, h4, h5 { margin: 0 0 12px; letter-spacing: -0.01em; }
 .description { margin: 0 0 14px; color: #3a4a62; }
-label { display: grid; gap: 6px; font-size: 14px; }
+label { display: grid; gap: 6px; font-size: 14px; font-weight: 500; }
 input, select, button { font: inherit; }
 input, select {
   border: 1px solid #c8d5e6;
   border-radius: 10px;
   padding: 10px;
   background: #ffffff;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+input:focus, select:focus {
+  outline: none;
+  border-color: #0369a1;
+  box-shadow: 0 0 0 3px rgba(3, 105, 161, 0.15);
 }
 button {
   border: 0;
@@ -40,8 +46,81 @@ button {
   background: #0369a1;
   color: #fff;
   cursor: pointer;
+  font-weight: 600;
+  transition: transform 0.1s ease, background 0.15s ease, box-shadow 0.15s ease;
 }
-button:disabled { opacity: 0.6; cursor: not-allowed; }
+button:hover:not(:disabled) { background: #045379; }
+button:active:not(:disabled) { transform: translateY(1px); }
+button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.hero {
+  text-align: center;
+  padding: 12px 8px 4px;
+}
+.hero h1 {
+  font-size: 34px;
+  font-weight: 800;
+  margin: 4px 0 8px;
+  background: linear-gradient(90deg, #0369a1, #0891b2);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.brand-kicker {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: #0891b2;
+  text-transform: uppercase;
+}
+.hero .description { color: #4b5c74; }
+
+.step-kicker {
+  margin: 0 0 4px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: #0891b2;
+  text-transform: uppercase;
+}
+
+.btn-secondary {
+  background: #ffffff;
+  color: #0369a1;
+  border: 1px solid #bcd6e8;
+}
+.btn-secondary:hover:not(:disabled) { background: #f0f8ff; }
+
+.btn-cta {
+  width: 100%;
+  margin-top: 12px;
+  padding: 13px 14px;
+  font-size: 15px;
+  background: linear-gradient(90deg, #0369a1, #0891b2);
+  box-shadow: 0 6px 16px rgba(8, 145, 178, 0.3);
+}
+.btn-cta:hover:not(:disabled) { background: linear-gradient(90deg, #045379, #0e7490); }
+
+.btn-link {
+  background: none;
+  color: #0369a1;
+  padding: 4px 0;
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.btn-link:hover:not(:disabled) { background: none; color: #045379; }
+
+.empty-hint {
+  margin: 0;
+  padding: 14px;
+  border: 1px dashed #c8d5e6;
+  border-radius: 12px;
+  color: #6b7c93;
+  text-align: center;
+}
 .row { display: grid; gap: 10px; margin-bottom: 10px; }
 .row.two { grid-template-columns: 1fr 1fr; }
 .row.three { grid-template-columns: 1fr 1fr 1fr; }
@@ -58,17 +137,62 @@ button:disabled { opacity: 0.6; cursor: not-allowed; }
   border-radius: 12px;
   margin: 10px 0;
 }
-.draft-grid { display: grid; gap: 10px; }
+.draft-grid { display: grid; gap: 14px; }
 .draft {
   border: 1px solid #d7e3f2;
   border-radius: 12px;
-  padding: 12px;
+  padding: 14px;
   background: #f9fcff;
+  display: grid;
+  gap: 8px;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 .draft.selected {
   border-color: #0284c7;
   background: #e8f5ff;
+  box-shadow: 0 4px 14px rgba(2, 132, 199, 0.15);
 }
+.draft-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+.draft-head h3 { margin: 0; font-size: 16px; }
+.draft-meta { margin: 0; font-size: 13px; color: #64748b; }
+.draft-preview {
+  margin: 0;
+  font-size: 14px;
+  color: #354056;
+  line-height: 1.5;
+}
+
+.badge {
+  flex: none;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.badge-generated { background: #eef2f7; color: #475569; }
+.badge-selected { background: #dcfce7; color: #15803d; }
+.badge-archived { background: #f1f5f9; color: #94a3b8; }
+
+.markdown-body {
+  font-size: 14px;
+  line-height: 1.65;
+  color: #1e293b;
+  background: #ffffff;
+  border: 1px solid #e2e9f3;
+  border-radius: 10px;
+  padding: 12px 14px;
+}
+.markdown-body h4 { font-size: 16px; margin: 0 0 8px; }
+.markdown-body h5 { font-size: 14px; margin: 12px 0 6px; color: #0369a1; }
+.markdown-body p { margin: 0 0 10px; }
+.markdown-body ul { margin: 0 0 10px; padding-left: 20px; }
+.markdown-body > *:last-child { margin-bottom: 0; }
 .result {
   margin: 8px 0 0;
   background: #0f172a;
