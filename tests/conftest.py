@@ -4,6 +4,11 @@ import os
 import subprocess
 from pathlib import Path
 
+# Force deterministic, offline draft generation for the test suite regardless
+# of the local .env's WORKER_DRAFT_MODE (e.g. gemini for manual/live testing).
+# Must run before backend.app.core.config's Settings singleton is imported.
+os.environ["WORKER_DRAFT_MODE"] = "mock"
+
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import text

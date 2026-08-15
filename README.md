@@ -615,6 +615,8 @@ PYTHONPATH=. python3 -m pytest -q tests/test_job_runner_project_scope.py
 ./scripts/day25_auth_refresh_logout_demo.sh
 ```
 
+위 실행으로 login -> refresh rotate -> logout revoke -> refresh 차단(401) 흐름을 확인합니다.
+
 ## Day 26 기록 (2026-05-01)
 - 프론트엔드 E2E 통합을 시도했으나(`feat(frontend): Day26 E2E UI integration for blog generation flow`) 같은 날 되돌림(revert) 처리되었습니다.
 - 실제 프론트엔드 통합은 Day27에서 asset 업로드 흐름과 함께 다시 작업되었습니다.
@@ -993,5 +995,4 @@ API_URL=http://127.0.0.1:8000 FRONTEND_URL=http://127.0.0.1:5173 \
   - 재생성 버그 수정: [backend/app/api/drafts.py](/Users/jin/Desktop/easy_ing/BlogSnap/backend/app/api/drafts.py) `regenerate_draft`가 항상 기본값(`키워드`/`설명`/감정 0)으로 재생성하던 것을 고쳐, `draft.source_job_id`를 통해 원래 생성 요청(키워드/감정/글종류/이미지)을 재사용하도록 수정
   - 의존성: [requirements.txt](/Users/jin/Desktop/easy_ing/BlogSnap/requirements.txt) (`google-genai`), [docker-compose.dev.yml](/Users/jin/Desktop/easy_ing/BlogSnap/docker-compose.dev.yml) (`api`/`worker`에 `WORKER_DRAFT_MODE`/`GEMINI_API_KEY`/`GEMINI_MODEL` 환경변수 전달)
 - 기본값은 여전히 `mock`이라 기존 테스트(`tests/`, 24건)는 회귀 없이 그대로 통과합니다. 실제 AI 생성을 쓰려면 `.env`에 `WORKER_DRAFT_MODE=gemini`와 [Google AI Studio](https://aistudio.google.com/apikey)에서 발급한 `GEMINI_API_KEY`를 설정하고 `docker compose -f docker-compose.dev.yml up -d --build api worker`로 재기동합니다.
-
-위 실행으로 login -> refresh rotate -> logout revoke -> refresh 차단(401) 흐름을 확인합니다.
+- **후속 수정**: 기본 모델 `gemini-2.5-flash`가 신규 발급 키에는 `404 no longer available to new users`로 막혀 있어 실제 생성이 계속 mock 콘텐츠로 조용히 대체되고 있었습니다. 실제 Gemini API로 사용 가능한 모델 목록을 조회해 `gemini-3.5-flash`로 기본값을 교체([backend/app/core/config.py](/Users/jin/Desktop/easy_ing/BlogSnap/backend/app/core/config.py), `.env`, `.env.example`)했고, DB에 저장된 실제 생성 결과로 서로 다른 제목/본문이 나오는 것까지 확인했습니다.
