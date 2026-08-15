@@ -3,6 +3,16 @@ import re
 
 from google import genai
 from google.genai import types
+from pydantic import BaseModel
+
+
+class _DraftItem(BaseModel):
+    title: str
+    markdown: str
+
+
+class _DraftBundle(BaseModel):
+    drafts: list[_DraftItem]
 
 
 POST_TYPE_LABELS = {
@@ -104,15 +114,23 @@ def generate_drafts(
     response = client.models.generate_content(
         model=model,
         contents=contents,
-        config=types.GenerateContentConfig(response_mime_type="application/json"),
+        config=types.GenerateContentConfig(
+            response_mime_type="application/json",
+            response_schema=_DraftBundle,
+        ),
     )
 
-    parsed = _parse_json_object(response.text)
-    drafts = parsed.get("drafts", [])
+    bundle = response.parsed
+    if isinstance(bundle, _DraftBundle):
+        drafts = [{"title": item.title.strip(), "markdown": item.markdown.strip()} for item in bundle.drafts]
+    else:
+        parsed = _parse_json_object(response.text)
+        drafts = [
+            {"title": str(item["title"]).strip(), "markdown": str(item["markdown"]).strip()}
+            for item in parsed.get("drafts", [])
+        ]
+
     if len(drafts) < draft_count:
         raise ValueError(f"Gemini returned {len(drafts)} drafts, expected at least {draft_count}")
 
-    return [
-        {"title": str(item["title"]).strip(), "markdown": str(item["markdown"]).strip()}
-        for item in drafts[:draft_count]
-    ]
+    return drafts[:draft_count]
