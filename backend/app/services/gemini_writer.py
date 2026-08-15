@@ -11,6 +11,22 @@ POST_TYPE_LABELS = {
     "impression": "소감문",
 }
 
+POST_TYPE_GUIDES = {
+    "review": (
+        "리뷰: 제품/장소/경험에 대한 평가가 중심이다. 장점과 단점을 균형 있게 짚고, "
+        "누구에게 추천하는지/추천하지 않는지를 명확히 밝힌다. 감정 강도에 따라 평가의 어조가 달라져야 한다."
+    ),
+    "explanation": (
+        "설명형: 개인적 감상보다 객관적 정보 전달이 중심이다. 특징, 사용법, 작동 방식, 배경 지식처럼 "
+        "사실 기반의 내용을 다루고, 튜토리얼/가이드에 가까운 담백한 어조를 유지한다. 과도한 감탄이나 "
+        "개인 일화는 자제한다."
+    ),
+    "impression": (
+        "소감문: 저자의 개인적인 경험과 느낀 점을 서술하는 에세이에 가깝다. 평가나 추천보다는 "
+        "그 순간 느꼈던 감정과 생각의 흐름을 자연스럽게 풀어낸다."
+    ),
+}
+
 SENTIMENT_LABELS = {
     -2: "강한 부정",
     -1: "약한 부정",
@@ -22,6 +38,7 @@ SENTIMENT_LABELS = {
 
 def _build_prompt(keyword: str, post_type: str, sentiment: int, draft_count: int) -> str:
     post_type_label = POST_TYPE_LABELS.get(post_type, post_type)
+    post_type_guide = POST_TYPE_GUIDES.get(post_type, "")
     sentiment_label = SENTIMENT_LABELS.get(sentiment, "중립")
     return f"""
 당신은 한국어 전문 블로그 작가입니다.
@@ -29,12 +46,13 @@ def _build_prompt(keyword: str, post_type: str, sentiment: int, draft_count: int
 
 조건:
 - 글 유형: {post_type_label}
+- 글 유형별 작성 방향: {post_type_guide}
 - 핵심 키워드: {keyword}
-- 감정 강도: {sentiment} ({sentiment_label})
+- 감정 강도: {sentiment} ({sentiment_label}) — 글 전체 톤의 가장 큰 기준으로 삼을 것
 - 첨부 이미지가 있다면 내용에 자연스럽게 반영할 것
 - 각 초고는 제목 1개와 본문 Markdown으로 구성
 - 본문은 도입, 소제목 3~5개, 결론을 포함
-- 초고마다 관점/구성/문체가 분명히 달라야 함
+- 초고마다 관점/구성/문체가 분명히 달라야 함 (단, 글 유형별 작성 방향은 모든 초고가 동일하게 따를 것)
 - 사실을 확신할 수 없으면 단정하지 말 것
 - 반드시 한국어로 작성
 
