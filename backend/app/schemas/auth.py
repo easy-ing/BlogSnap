@@ -27,5 +27,14 @@ class MeResponse(BaseModel):
     id: UUID
     email: str
     display_name: Optional[str]
+    gemini_key_connected: bool = False
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class GeminiKeySetRequest(BaseModel):
+    api_key: str = Field(min_length=10, max_length=200)
+
+
+class GeminiKeyStatusResponse(BaseModel):
+    gemini_key_connected: bool

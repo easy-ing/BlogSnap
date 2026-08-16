@@ -144,6 +144,26 @@ button:disabled { opacity: 0.35; cursor: not-allowed; }
   text-align: center;
   font-size: 14px;
 }
+.gemini-key-box {
+  margin-top: 14px;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  display: grid;
+  gap: 10px;
+}
+.gemini-key-status {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.gemini-key-hint {
+  margin: 0;
+  font-size: 12px;
+  color: var(--muted-light);
+}
 .row { display: grid; gap: 10px; margin-bottom: 10px; }
 .row.two { grid-template-columns: 1fr 1fr; }
 .row.three { grid-template-columns: 1fr 1fr 1fr; }

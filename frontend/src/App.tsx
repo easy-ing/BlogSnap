@@ -17,7 +17,15 @@ type Project = {
 type Job = {
   id: string;
   status: string;
+  error_message?: string | null;
   result_payload?: { publish_job_id?: string };
+};
+
+type MeResponse = {
+  id: string;
+  email: string;
+  display_name?: string | null;
+  gemini_key_connected: boolean;
 };
 
 type Draft = {
@@ -145,6 +153,9 @@ export function App() {
   const [imagePreview, setImagePreview] = useState<string>("");
   const [selectedImageFile, setSelectedImageFile] = useState<File | null>(null);
 
+  const [geminiKeyInput, setGeminiKeyInput] = useState("");
+  const [geminiKeyConnected, setGeminiKeyConnected] = useState(false);
+
   const [drafts, setDrafts] = useState<Draft[]>([]);
   const [selectedDraftId, setSelectedDraftId] = useState<string>("");
   const [expandedDraftId, setExpandedDraftId] = useState<string>("");
@@ -231,6 +242,7 @@ export function App() {
       setRefreshToken(auth.refresh_token);
       setMessage("로그인 완료. 프로젝트를 불러오거나 생성하세요.");
       await loadProjects(auth.access_token);
+      await loadMe(auth.access_token);
     } catch (error) {
       setMessage(`로그인 실패: ${String(error)}`);
     } finally {
@@ -252,6 +264,51 @@ export function App() {
     }
   };
 
+  const loadMe = async (overrideToken?: string) => {
+    try {
+      const me = await authedFetch<MeResponse>("/v1/auth/me", {
+        headers: overrideToken ? { Authorization: `Bearer ${overrideToken}` } : undefined,
+      });
+      setGeminiKeyConnected(me.gemini_key_connected);
+    } catch {
+      // non-critical: leave connected state as-is
+    }
+  };
+
+  const connectGeminiKey = async () => {
+    if (!geminiKeyInput.trim()) {
+      setMessage("연결할 Gemini API 키를 입력하세요.");
+      return;
+    }
+    setLoading(true);
+    try {
+      await authedFetch("/v1/auth/me/gemini-key", {
+        method: "PUT",
+        body: JSON.stringify({ api_key: geminiKeyInput.trim() }),
+      });
+      setGeminiKeyConnected(true);
+      setGeminiKeyInput("");
+      setMessage("Gemini API 키 연결 완료. 이후 초고 생성은 이 키로 진행됩니다.");
+    } catch (error) {
+      setMessage(`Gemini API 키 연결 실패: ${String(error)}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const disconnectGeminiKey = async () => {
+    setLoading(true);
+    try {
+      await authedFetch("/v1/auth/me/gemini-key", { method: "DELETE" });
+      setGeminiKeyConnected(false);
+      setMessage("Gemini API 키 연결을 해제했습니다.");
+    } catch (error) {
+      setMessage(`연결 해제 실패: ${String(error)}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const createProject = async (event: FormEvent) => {
     event.preventDefault();
     setLoading(true);
@@ -270,8 +327,8 @@ export function App() {
     }
   };
 
-  const runNextJob = async (pid: string) => {
-    await authedFetch<Job>(`/v1/jobs/run-next?project_id=${pid}`, { method: "POST" });
+  const runNextJob = async (pid: string): Promise<Job> => {
+    return authedFetch<Job>(`/v1/jobs/run-next?project_id=${pid}`, { method: "POST" });
   };
 
   const generateDrafts = async () => {
@@ -311,7 +368,11 @@ export function App() {
           idempotency_key: crypto.randomUUID(),
         }),
       });
-      await runNextJob(projectId);
+      const job = await runNextJob(projectId);
+      if (job.status !== "SUCCEEDED") {
+        setMessage(`초고 생성 실패: ${job.error_message ?? job.status}`);
+        return;
+      }
       const items = await authedFetch<Draft[]>(`/v1/drafts?project_id=${projectId}`);
       setDrafts(items);
       setMessage(`초고 생성 완료: ${items.length}건 확인${imageAssetId ? ` (이미지 연결: ${imageAssetId.slice(0, 8)}...)` : ""}`);
@@ -332,7 +393,11 @@ export function App() {
         method: "POST",
         body: JSON.stringify({ idempotency_key: crypto.randomUUID() }),
       });
-      await runNextJob(projectId);
+      const job = await runNextJob(projectId);
+      if (job.status !== "SUCCEEDED") {
+        setMessage(`재생성 실패: ${job.error_message ?? job.status}`);
+        return;
+      }
       const items = await authedFetch<Draft[]>(`/v1/drafts?project_id=${projectId}`);
       setDrafts(items);
       setMessage("다른 방향성으로 재생성 완료");
@@ -423,6 +488,37 @@ export function App() {
           </label>
         </div>
         <button onClick={login} disabled={loading}>로그인</button>
+
+        <div className="gemini-key-box">
+          <div className="gemini-key-status">
+            <span className={`badge ${geminiKeyConnected ? "badge-selected" : "badge-archived"}`}>
+              {geminiKeyConnected ? "Gemini API 키 연결됨" : "Gemini API 키 미연결"}
+            </span>
+            <a href="https://aistudio.google.com/apikey" target="_blank" rel="noreferrer" className="btn-link">
+              무료 키 발급받기 ↗
+            </a>
+          </div>
+          {geminiKeyConnected ? (
+            <button type="button" className="btn-secondary" onClick={disconnectGeminiKey} disabled={loading}>
+              연결 해제
+            </button>
+          ) : (
+            <div className="row two">
+              <input
+                type="password"
+                placeholder="본인의 Gemini API 키를 입력하세요"
+                value={geminiKeyInput}
+                onChange={(e) => setGeminiKeyInput(e.target.value)}
+              />
+              <button type="button" onClick={connectGeminiKey} disabled={loading || !token}>
+                키 연결
+              </button>
+            </div>
+          )}
+          <p className="gemini-key-hint">
+            초고 생성은 본인이 연결한 Gemini API 키로만 동작합니다. 한 번 연결하면 다음부터는 다시 입력할 필요 없어요.
+          </p>
+        </div>
 
         <form onSubmit={createProject} className="stack">
           <div className="row two">

@@ -6,9 +6,10 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from backend.app.core.config import settings
-from backend.app.models.entities import Asset, Draft, Job, PublishJob
+from backend.app.models.entities import Asset, Draft, Job, Project, PublishJob, User
 from backend.app.models.enums import DraftStatus, JobType, ProviderType, PublishStatus, ScheduleStatus
 from backend.app.services.gemini_writer import generate_drafts
+from backend.app.services.secret_crypto import decrypt_secret
 from backend.app.worker.publishers import publish_to_tistory, publish_to_wordpress
 
 
@@ -41,6 +42,17 @@ def _build_mock_markdown(keyword: str, sentiment: int, post_type: str, variant_n
     )
 
 
+def _get_owner_gemini_key(db: Session, project_id: uuid.UUID) -> str:
+    owner = db.scalar(
+        select(User).join(Project, Project.user_id == User.id).where(Project.id == project_id)
+    )
+    if not owner or not owner.gemini_api_key_encrypted:
+        raise ValueError(
+            "Gemini API 키가 연결되어 있지 않습니다. 설정에서 본인의 Gemini API 키를 먼저 연결해주세요."
+        )
+    return decrypt_secret(owner.gemini_api_key_encrypted)
+
+
 def _load_image(db: Session, image_asset_id: str | None) -> tuple[bytes | None, str | None]:
     if not image_asset_id:
         return None, None
@@ -70,9 +82,10 @@ def _execute_draft_job(db: Session, job: Job) -> dict:
 
     mode = settings.worker_draft_mode.strip().lower()
     if mode == "gemini":
+        user_api_key = _get_owner_gemini_key(db, job.project_id)
         image_bytes, image_mime_type = _load_image(db, payload.get("image_asset_id"))
         drafts_data = generate_drafts(
-            api_key=settings.gemini_api_key,
+            api_key=user_api_key,
             model=settings.gemini_model,
             keyword=keyword,
             post_type=post_type,

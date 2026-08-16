@@ -16,12 +16,15 @@ from backend.app.core.config import settings
 from backend.app.db.session import get_db
 from backend.app.models.entities import AuthSession, User
 from backend.app.schemas.auth import (
+    GeminiKeySetRequest,
+    GeminiKeyStatusResponse,
     LoginRequest,
     LoginResponse,
     LogoutRequest,
     MeResponse,
     RefreshRequest,
 )
+from backend.app.services.secret_crypto import encrypt_secret
 
 
 router = APIRouter(prefix="/v1/auth", tags=["auth"])
@@ -57,8 +60,36 @@ def login(payload: LoginRequest, db: Session = Depends(get_db)) -> LoginResponse
 
 
 @router.get("/me", response_model=MeResponse)
-def me(current_user: User = Depends(get_current_user)) -> User:
-    return current_user
+def me(current_user: User = Depends(get_current_user)) -> MeResponse:
+    return MeResponse(
+        id=current_user.id,
+        email=current_user.email,
+        display_name=current_user.display_name,
+        gemini_key_connected=bool(current_user.gemini_api_key_encrypted),
+    )
+
+
+@router.put("/me/gemini-key", response_model=GeminiKeyStatusResponse)
+def set_gemini_key(
+    payload: GeminiKeySetRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> GeminiKeyStatusResponse:
+    current_user.gemini_api_key_encrypted = encrypt_secret(payload.api_key.strip())
+    current_user.updated_at = datetime.now(timezone.utc)
+    db.commit()
+    return GeminiKeyStatusResponse(gemini_key_connected=True)
+
+
+@router.delete("/me/gemini-key", response_model=GeminiKeyStatusResponse)
+def delete_gemini_key(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> GeminiKeyStatusResponse:
+    current_user.gemini_api_key_encrypted = None
+    current_user.updated_at = datetime.now(timezone.utc)
+    db.commit()
+    return GeminiKeyStatusResponse(gemini_key_connected=False)
 
 
 @router.post("/refresh", response_model=LoginResponse)

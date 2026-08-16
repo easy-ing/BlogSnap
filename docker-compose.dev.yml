@@ -27,8 +27,7 @@ services:
       DATABASE_URL: postgresql+psycopg://blogsnap:blogsnap@postgres:5432/blogsnap
       WORKER_PUBLISH_MODE: mock
       WORKER_DRAFT_MODE: ${WORKER_DRAFT_MODE:-mock}
-      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
-      GEMINI_MODEL: ${GEMINI_MODEL:-gemini-2.5-flash}
+      GEMINI_MODEL: ${GEMINI_MODEL:-gemini-3.5-flash}
       LOG_LEVEL: INFO
     depends_on:
       postgres:
@@ -47,8 +46,7 @@ services:
       DATABASE_URL: postgresql+psycopg://blogsnap:blogsnap@postgres:5432/blogsnap
       WORKER_PUBLISH_MODE: mock
       WORKER_DRAFT_MODE: ${WORKER_DRAFT_MODE:-mock}
-      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
-      GEMINI_MODEL: ${GEMINI_MODEL:-gemini-2.5-flash}
+      GEMINI_MODEL: ${GEMINI_MODEL:-gemini-3.5-flash}
       WORKER_POLL_SECONDS: 3
       WORKER_BATCH_SIZE: 10
       LOG_LEVEL: INFO
