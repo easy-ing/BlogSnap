@@ -28,6 +28,7 @@ class MeResponse(BaseModel):
     email: str
     display_name: Optional[str]
     gemini_key_connected: bool = False
+    naver_connected: bool = False
 
     model_config = ConfigDict(from_attributes=True)
 

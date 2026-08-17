@@ -42,6 +42,7 @@ class ScheduleStatus(str, Enum):
 class ProviderType(str, Enum):
     wordpress = "wordpress"
     tistory = "tistory"
+    naver = "naver"
 
 
 class AssetStatus(str, Enum):

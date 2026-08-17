@@ -119,6 +119,30 @@ class PublishJob(Base):
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
 
+class ProviderToken(Base):
+    __tablename__ = "provider_tokens"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    provider: Mapped[ProviderType] = mapped_column(Enum(ProviderType, name="provider_type"), nullable=False)
+    encrypted_access_token: Mapped[str] = mapped_column(Text, nullable=False)
+    encrypted_refresh_token: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    token_expires_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class OAuthState(Base):
+    __tablename__ = "oauth_states"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    provider: Mapped[ProviderType] = mapped_column(Enum(ProviderType, name="provider_type"), nullable=False)
+    state: Mapped[str] = mapped_column(String, nullable=False, unique=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+
 class AuthSession(Base):
     __tablename__ = "auth_sessions"
 

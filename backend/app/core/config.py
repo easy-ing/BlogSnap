@@ -31,6 +31,11 @@ class Settings(BaseSettings):
     asset_deleted_retention_hours: int = 24
     worker_draft_mode: str = "mock"
     gemini_model: str = "gemini-3.5-flash"
+    naver_client_id: str = ""
+    naver_client_secret: str = ""
+    naver_redirect_uri: str = "http://localhost:8000/v1/auth/naver/callback"
+    naver_login_success_redirect: str = "http://localhost:5173/?naver=connected"
+    naver_login_failure_redirect: str = "http://localhost:5173/?naver=error"
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 

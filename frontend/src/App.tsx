@@ -26,6 +26,7 @@ type MeResponse = {
   email: string;
   display_name?: string | null;
   gemini_key_connected: boolean;
+  naver_connected: boolean;
 };
 
 type Draft = {
@@ -155,10 +156,12 @@ export function App() {
 
   const [geminiKeyInput, setGeminiKeyInput] = useState("");
   const [geminiKeyConnected, setGeminiKeyConnected] = useState(false);
+  const [naverConnected, setNaverConnected] = useState(false);
 
   const [drafts, setDrafts] = useState<Draft[]>([]);
   const [selectedDraftId, setSelectedDraftId] = useState<string>("");
   const [expandedDraftId, setExpandedDraftId] = useState<string>("");
+  const [publishProvider, setPublishProvider] = useState<"wordpress" | "tistory" | "naver">("wordpress");
   const [publishResult, setPublishResult] = useState<PublishResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("로그인 후 프로젝트를 만들고 초고를 생성하세요.");
@@ -270,6 +273,7 @@ export function App() {
         headers: overrideToken ? { Authorization: `Bearer ${overrideToken}` } : undefined,
       });
       setGeminiKeyConnected(me.gemini_key_connected);
+      setNaverConnected(me.naver_connected);
     } catch {
       // non-critical: leave connected state as-is
     }
@@ -435,12 +439,16 @@ export function App() {
         body: JSON.stringify({
           project_id: projectId,
           draft_id: selectedDraftId,
-          provider: "wordpress",
+          provider: publishProvider,
           idempotency_key: crypto.randomUUID(),
         }),
       });
-      await runNextJob(projectId);
       const publishJobId = job.result_payload?.publish_job_id;
+      const ranJob = await runNextJob(projectId);
+      if (ranJob.status !== "SUCCEEDED") {
+        setMessage(`발행 실패: ${ranJob.error_message ?? ranJob.status}`);
+        return;
+      }
       if (!publishJobId) {
         throw new Error("publish_job_id not found");
       }
@@ -449,6 +457,30 @@ export function App() {
       setMessage("발행 처리 완료");
     } catch (error) {
       setMessage(`발행 실패: ${String(error)}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const connectNaver = async () => {
+    setLoading(true);
+    try {
+      const { login_url } = await authedFetch<{ login_url: string }>("/v1/auth/naver/login-url");
+      window.location.href = login_url;
+    } catch (error) {
+      setMessage(`네이버 연결 실패: ${String(error)}`);
+      setLoading(false);
+    }
+  };
+
+  const disconnectNaver = async () => {
+    setLoading(true);
+    try {
+      await authedFetch("/v1/auth/naver", { method: "DELETE" });
+      setNaverConnected(false);
+      setMessage("네이버 연결을 해제했습니다.");
+    } catch (error) {
+      setMessage(`연결 해제 실패: ${String(error)}`);
     } finally {
       setLoading(false);
     }
@@ -517,6 +549,26 @@ export function App() {
           )}
           <p className="gemini-key-hint">
             초고 생성은 본인이 연결한 Gemini API 키로만 동작합니다. 한 번 연결하면 다음부터는 다시 입력할 필요 없어요.
+          </p>
+        </div>
+
+        <div className="gemini-key-box">
+          <div className="gemini-key-status">
+            <span className={`badge ${naverConnected ? "badge-selected" : "badge-archived"}`}>
+              {naverConnected ? "네이버 계정 연결됨" : "네이버 계정 미연결"}
+            </span>
+          </div>
+          {naverConnected ? (
+            <button type="button" className="btn-secondary" onClick={disconnectNaver} disabled={loading}>
+              연결 해제
+            </button>
+          ) : (
+            <button type="button" onClick={connectNaver} disabled={loading || !token}>
+              네이버로 로그인하고 연결
+            </button>
+          )}
+          <p className="gemini-key-hint">
+            네이버 계정을 연결하면 초고를 네이버 블로그에 바로 발행할 수 있습니다 (네이버 심사 승인 전에는 실패할 수 있어요).
           </p>
         </div>
 
@@ -630,6 +682,14 @@ export function App() {
             })}
           </div>
         )}
+        <label>
+          발행할 곳
+          <select value={publishProvider} onChange={(e) => setPublishProvider(e.target.value as typeof publishProvider)}>
+            <option value="wordpress">워드프레스</option>
+            <option value="tistory">티스토리</option>
+            <option value="naver">네이버 블로그{naverConnected ? "" : " (연결 필요)"}</option>
+          </select>
+        </label>
         <button className="btn-cta" onClick={publish} disabled={loading || !selectedDraftId}>선택 초고 자동 업로드</button>
       </section>
 

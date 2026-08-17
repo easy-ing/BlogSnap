@@ -14,7 +14,8 @@ from backend.app.core.auth import (
 )
 from backend.app.core.config import settings
 from backend.app.db.session import get_db
-from backend.app.models.entities import AuthSession, User
+from backend.app.models.entities import AuthSession, ProviderToken, User
+from backend.app.models.enums import ProviderType
 from backend.app.schemas.auth import (
     GeminiKeySetRequest,
     GeminiKeyStatusResponse,
@@ -60,12 +61,19 @@ def login(payload: LoginRequest, db: Session = Depends(get_db)) -> LoginResponse
 
 
 @router.get("/me", response_model=MeResponse)
-def me(current_user: User = Depends(get_current_user)) -> MeResponse:
+def me(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)) -> MeResponse:
+    naver_token = db.scalar(
+        select(ProviderToken).where(
+            ProviderToken.user_id == current_user.id,
+            ProviderToken.provider == ProviderType.naver,
+        )
+    )
     return MeResponse(
         id=current_user.id,
         email=current_user.email,
         display_name=current_user.display_name,
         gemini_key_connected=bool(current_user.gemini_api_key_encrypted),
+        naver_connected=naver_token is not None,
     )
 
 
