@@ -79,6 +79,47 @@ const STATUS_LABEL: Record<string, string> = {
   ARCHIVED: "보관됨",
 };
 
+const STEPS = [
+  { no: 1, label: "연결" },
+  { no: 2, label: "초고 생성" },
+  { no: 3, label: "선택" },
+  { no: 4, label: "발행" },
+] as const;
+
+function Stepper({
+  current,
+  unlocked,
+  onSelect,
+}: {
+  current: number;
+  unlocked: number;
+  onSelect: (step: number) => void;
+}) {
+  return (
+    <ol className="stepper">
+      {STEPS.map((step, index) => {
+        const isDone = step.no < unlocked;
+        const isCurrent = step.no === current;
+        const isReachable = step.no <= unlocked;
+        return (
+          <li key={step.no} className="stepper-item">
+            <button
+              type="button"
+              className={`stepper-node ${isCurrent ? "is-current" : ""} ${isDone ? "is-done" : ""}`}
+              onClick={() => isReachable && onSelect(step.no)}
+              disabled={!isReachable}
+            >
+              <span className="stepper-index">{isDone ? "✓" : step.no}</span>
+              <span className="stepper-label">{step.label}</span>
+            </button>
+            {index < STEPS.length - 1 ? <span className={`stepper-line ${isDone ? "is-done" : ""}`} /> : null}
+          </li>
+        );
+      })}
+    </ol>
+  );
+}
+
 const API_BASE = import.meta.env.VITE_API_BASE ?? "/api";
 
 function markdownPreview(markdown: string): string {
@@ -165,6 +206,19 @@ export function App() {
   const [publishResult, setPublishResult] = useState<PublishResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("로그인 후 프로젝트를 만들고 초고를 생성하세요.");
+
+  const [currentStep, setCurrentStep] = useState(1);
+  const [unlockedStep, setUnlockedStep] = useState(1);
+
+  const goToStep = (step: number) => {
+    if (step <= unlockedStep) {
+      setCurrentStep(step);
+    }
+  };
+  const advanceTo = (step: number) => {
+    setCurrentStep(step);
+    setUnlockedStep((prev) => Math.max(prev, step));
+  };
 
   const sentimentExample = useMemo(
     () => SENTIMENT_OPTIONS.find((item) => item.value === sentiment)?.example ?? "",
@@ -380,6 +434,7 @@ export function App() {
       const items = await authedFetch<Draft[]>(`/v1/drafts?project_id=${projectId}`);
       setDrafts(items);
       setMessage(`초고 생성 완료: ${items.length}건 확인${imageAssetId ? ` (이미지 연결: ${imageAssetId.slice(0, 8)}...)` : ""}`);
+      advanceTo(3);
     } catch (error) {
       setMessage(`초고 생성 실패: ${String(error)}`);
     } finally {
@@ -420,6 +475,7 @@ export function App() {
       const items = await authedFetch<Draft[]>(`/v1/drafts?project_id=${projectId}`);
       setDrafts(items);
       setMessage("초고 선택 완료");
+      advanceTo(4);
     } catch (error) {
       setMessage(`선택 실패: ${String(error)}`);
     } finally {
@@ -498,209 +554,252 @@ export function App() {
     setSelectedImageFile(file);
   };
 
+  const canLeaveStep1 = Boolean(token && projectId && geminiKeyConnected);
+
   return (
     <main className="page">
       <header className="hero">
         <p className="brand-kicker">AI 블로그 자동화</p>
         <h1>BlogSnap</h1>
-        <p className="description">글 유형 선택 → 키워드/이미지/긍부정 설정 → 초고 2~3개 생성 → 선택 → 자동 발행</p>
+        <p className="description">사진과 키워드로 블로그 초고를 쓰고, 원하는 곳에 바로 발행하세요.</p>
       </header>
 
-      <section className="card">
-        <p className="step-kicker">STEP 1</p>
-        <h2>로그인 &amp; 프로젝트</h2>
-        <div className="row two">
-          <label>
-            이메일
-            <input value={email} onChange={(e) => setEmail(e.target.value)} />
-          </label>
-          <label>
-            닉네임
-            <input value={displayName} onChange={(e) => setDisplayName(e.target.value)} />
-          </label>
-        </div>
-        <button onClick={login} disabled={loading}>로그인</button>
+      <Stepper current={currentStep} unlocked={unlockedStep} onSelect={goToStep} />
 
-        <div className="gemini-key-box">
-          <div className="gemini-key-status">
-            <span className={`badge ${geminiKeyConnected ? "badge-selected" : "badge-archived"}`}>
-              {geminiKeyConnected ? "Gemini API 키 연결됨" : "Gemini API 키 미연결"}
-            </span>
-            <a href="https://aistudio.google.com/apikey" target="_blank" rel="noreferrer" className="btn-link">
-              무료 키 발급받기 ↗
-            </a>
-          </div>
-          {geminiKeyConnected ? (
-            <button type="button" className="btn-secondary" onClick={disconnectGeminiKey} disabled={loading}>
-              연결 해제
-            </button>
-          ) : (
-            <div className="row two">
-              <input
-                type="password"
-                placeholder="본인의 Gemini API 키를 입력하세요"
-                value={geminiKeyInput}
-                onChange={(e) => setGeminiKeyInput(e.target.value)}
-              />
-              <button type="button" onClick={connectGeminiKey} disabled={loading || !token}>
-                키 연결
-              </button>
-            </div>
-          )}
-          <p className="gemini-key-hint">
-            초고 생성은 본인이 연결한 Gemini API 키로만 동작합니다. 한 번 연결하면 다음부터는 다시 입력할 필요 없어요.
-          </p>
-        </div>
+      {message && currentStep !== 4 ? <p className="status-line">{message}</p> : null}
 
-        <div className="gemini-key-box">
-          <div className="gemini-key-status">
-            <span className={`badge ${naverConnected ? "badge-selected" : "badge-archived"}`}>
-              {naverConnected ? "네이버 계정 연결됨" : "네이버 계정 미연결"}
-            </span>
-          </div>
-          {naverConnected ? (
-            <button type="button" className="btn-secondary" onClick={disconnectNaver} disabled={loading}>
-              연결 해제
-            </button>
-          ) : (
-            <button type="button" onClick={connectNaver} disabled={loading || !token}>
-              네이버로 로그인하고 연결
-            </button>
-          )}
-          <p className="gemini-key-hint">
-            네이버 계정을 연결하면 초고를 네이버 블로그에 바로 발행할 수 있습니다 (네이버 심사 승인 전에는 실패할 수 있어요).
-          </p>
-        </div>
+      {currentStep === 1 && (
+        <section className="card">
+          <h2>계정 연결</h2>
+          <p className="step-desc">로그인하고, 초고 생성에 쓸 Gemini 키와 작업할 프로젝트를 연결하세요.</p>
 
-        <form onSubmit={createProject} className="stack">
           <div className="row two">
             <label>
-              새 프로젝트명
-              <input value={projectName} onChange={(e) => setProjectName(e.target.value)} />
+              이메일
+              <input value={email} onChange={(e) => setEmail(e.target.value)} />
             </label>
             <label>
-              기존 프로젝트
-              <select value={projectId} onChange={(e) => setProjectId(e.target.value)}>
-                <option value="">선택하세요</option>
-                {projects.map((project) => (
-                  <option key={project.id} value={project.id}>{project.name}</option>
-                ))}
+              닉네임
+              <input value={displayName} onChange={(e) => setDisplayName(e.target.value)} />
+            </label>
+          </div>
+          <button onClick={login} disabled={loading}>로그인</button>
+
+          <div className="connect-box">
+            <div className="connect-box-status">
+              <span className={`badge ${geminiKeyConnected ? "badge-selected" : "badge-archived"}`}>
+                {geminiKeyConnected ? "Gemini API 키 연결됨" : "Gemini API 키 미연결 (필수)"}
+              </span>
+              <a href="https://aistudio.google.com/apikey" target="_blank" rel="noreferrer" className="btn-link">
+                무료 키 발급받기 ↗
+              </a>
+            </div>
+            {geminiKeyConnected ? (
+              <button type="button" className="btn-secondary" onClick={disconnectGeminiKey} disabled={loading}>
+                연결 해제
+              </button>
+            ) : (
+              <div className="row two">
+                <input
+                  type="password"
+                  placeholder="본인의 Gemini API 키를 입력하세요"
+                  value={geminiKeyInput}
+                  onChange={(e) => setGeminiKeyInput(e.target.value)}
+                />
+                <button type="button" onClick={connectGeminiKey} disabled={loading || !token}>
+                  키 연결
+                </button>
+              </div>
+            )}
+            <p className="connect-box-hint">
+              초고 생성은 본인이 연결한 Gemini API 키로만 동작합니다. 한 번 연결하면 다음부터는 다시 입력할 필요 없어요.
+            </p>
+          </div>
+
+          <div className="connect-box">
+            <div className="connect-box-status">
+              <span className={`badge ${naverConnected ? "badge-selected" : "badge-archived"}`}>
+                {naverConnected ? "네이버 계정 연결됨" : "네이버 계정 미연결 (선택)"}
+              </span>
+            </div>
+            {naverConnected ? (
+              <button type="button" className="btn-secondary" onClick={disconnectNaver} disabled={loading}>
+                연결 해제
+              </button>
+            ) : (
+              <button type="button" onClick={connectNaver} disabled={loading || !token}>
+                네이버로 로그인하고 연결
+              </button>
+            )}
+            <p className="connect-box-hint">
+              네이버 블로그에 바로 발행하려면 연결하세요. 나중에 4단계에서 연결해도 됩니다.
+            </p>
+          </div>
+
+          <form onSubmit={createProject} className="stack">
+            <div className="row two">
+              <label>
+                새 프로젝트명
+                <input value={projectName} onChange={(e) => setProjectName(e.target.value)} />
+              </label>
+              <label>
+                기존 프로젝트
+                <select value={projectId} onChange={(e) => setProjectId(e.target.value)}>
+                  <option value="">선택하세요</option>
+                  {projects.map((project) => (
+                    <option key={project.id} value={project.id}>{project.name}</option>
+                  ))}
+                </select>
+              </label>
+            </div>
+            <button type="submit" disabled={loading || !token}>프로젝트 생성</button>
+          </form>
+
+          <div className="step-nav">
+            <span className="step-nav-hint">
+              {canLeaveStep1 ? "다음 단계로 진행할 수 있어요." : "로그인, Gemini 키 연결, 프로젝트 선택을 마쳐야 다음으로 갈 수 있어요."}
+            </span>
+            <button className="btn-cta" onClick={() => advanceTo(2)} disabled={!canLeaveStep1}>
+              다음: 초고 생성
+            </button>
+          </div>
+        </section>
+      )}
+
+      {currentStep === 2 && (
+        <section className="card">
+          <h2>초고 생성</h2>
+          <p className="step-desc">키워드와 톤을 정하고, 사진을 첨부하면 AI가 초고 2~3개를 씁니다.</p>
+
+          <div className="row three">
+            <label>
+              글 종류
+              <select value={postType} onChange={(e) => setPostType(e.target.value as PostType)}>
+                <option value="review">리뷰</option>
+                <option value="explanation">설명</option>
+                <option value="impression">소감문</option>
+              </select>
+            </label>
+            <label>
+              키워드
+              <input value={keyword} onChange={(e) => setKeyword(e.target.value)} />
+            </label>
+            <label>
+              초고 개수
+              <select value={draftCount} onChange={(e) => setDraftCount(Number(e.target.value) as 2 | 3)}>
+                <option value={2}>2개</option>
+                <option value={3}>3개</option>
               </select>
             </label>
           </div>
-          <button type="submit" disabled={loading || !token}>프로젝트 생성</button>
-        </form>
-      </section>
 
-      <section className="card">
-        <p className="step-kicker">STEP 2</p>
-        <h2>초고 생성</h2>
-        <div className="row three">
-          <label>
-            글 종류
-            <select value={postType} onChange={(e) => setPostType(e.target.value as PostType)}>
-              <option value="review">리뷰</option>
-              <option value="explanation">설명</option>
-              <option value="impression">소감문</option>
-            </select>
-          </label>
-          <label>
-            키워드
-            <input value={keyword} onChange={(e) => setKeyword(e.target.value)} />
-          </label>
-          <label>
-            초고 개수
-            <select value={draftCount} onChange={(e) => setDraftCount(Number(e.target.value) as 2 | 3)}>
-              <option value={2}>2개</option>
-              <option value={3}>3개</option>
-            </select>
-          </label>
-        </div>
-
-        <div className="row two">
-          <label>
-            긍부정 정도
-            <select value={sentiment} onChange={(e) => setSentiment(Number(e.target.value) as SentimentValue)}>
-              {SENTIMENT_OPTIONS.map((option) => (
-                <option key={option.value} value={option.value}>{option.label}</option>
-              ))}
-            </select>
-          </label>
-          <div className="hint-box">
-            <strong>예시 문장</strong>
-            <p>{sentimentExample}</p>
+          <div className="row two">
+            <label>
+              긍부정 정도
+              <select value={sentiment} onChange={(e) => setSentiment(Number(e.target.value) as SentimentValue)}>
+                {SENTIMENT_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>{option.label}</option>
+                ))}
+              </select>
+            </label>
+            <div className="hint-box">
+              <strong>예시 문장</strong>
+              <p>{sentimentExample}</p>
+            </div>
           </div>
-        </div>
 
-        <label>
-          사진 첨부 (선택)
-          <input type="file" accept="image/*" onChange={onImageChange} />
-        </label>
-        {imagePreview ? <img className="preview" src={imagePreview} alt="업로드한 사진 미리보기" /> : null}
+          <label>
+            사진 첨부 (선택)
+            <input type="file" accept="image/*" onChange={onImageChange} />
+          </label>
+          {imagePreview ? <img className="preview" src={imagePreview} alt="업로드한 사진 미리보기" /> : null}
 
-        <button onClick={generateDrafts} disabled={loading || !token}>초고 생성 + 작업 실행</button>
-      </section>
-
-      <section className="card">
-        <p className="step-kicker">STEP 3</p>
-        <h2>초고 선택</h2>
-        {drafts.length === 0 ? (
-          <p className="empty-hint">아직 생성된 초고가 없어요. 위에서 먼저 초고를 생성해보세요.</p>
-        ) : (
-          <div className="draft-grid">
-            {drafts.map((draft) => {
-              const isExpanded = expandedDraftId === draft.id;
-              return (
-                <article key={draft.id} className={`draft ${selectedDraftId === draft.id ? "selected" : ""}`}>
-                  <div className="draft-head">
-                    <h3>{draft.title}</h3>
-                    <span className={`badge badge-${draft.status.toLowerCase()}`}>
-                      {STATUS_LABEL[draft.status] ?? draft.status}
-                    </span>
-                  </div>
-                  <p className="draft-meta">
-                    {POST_TYPE_LABEL[draft.post_type]} · 감정 {draft.sentiment} · v{draft.version_no}-{draft.variant_no}
-                  </p>
-                  {isExpanded ? (
-                    <MarkdownBlock markdown={draft.markdown} />
-                  ) : (
-                    <p className="draft-preview">{markdownPreview(draft.markdown) || "본문 내용이 비어 있습니다."}</p>
-                  )}
-                  <button
-                    type="button"
-                    className="btn-link"
-                    onClick={() => setExpandedDraftId(isExpanded ? "" : draft.id)}
-                  >
-                    {isExpanded ? "본문 접기" : "본문 전체 보기"}
-                  </button>
-                  <div className="row two">
-                    <button onClick={() => selectDraft(draft.id)} disabled={loading}>이 초고 선택</button>
-                    <button className="btn-secondary" onClick={() => regenerate(draft.id)} disabled={loading}>다른 방향 재생성</button>
-                  </div>
-                </article>
-              );
-            })}
+          <div className="step-nav">
+            <button className="btn-secondary" onClick={() => goToStep(1)}>이전</button>
+            <button className="btn-cta" onClick={generateDrafts} disabled={loading || !token}>
+              초고 생성 + 작업 실행
+            </button>
           </div>
-        )}
-        <label>
-          발행할 곳
-          <select value={publishProvider} onChange={(e) => setPublishProvider(e.target.value as typeof publishProvider)}>
-            <option value="wordpress">워드프레스</option>
-            <option value="tistory">티스토리</option>
-            <option value="naver">네이버 블로그{naverConnected ? "" : " (연결 필요)"}</option>
-          </select>
-        </label>
-        <button className="btn-cta" onClick={publish} disabled={loading || !selectedDraftId}>선택 초고 자동 업로드</button>
-      </section>
+        </section>
+      )}
 
-      <section className="card">
-        <p className="step-kicker">STEP 4</p>
-        <h2>결과</h2>
-        <p>{message}</p>
-        {publishResult ? (
-          <pre className="result">{JSON.stringify(publishResult, null, 2)}</pre>
-        ) : null}
-      </section>
+      {currentStep === 3 && (
+        <section className="card">
+          <h2>초고 선택</h2>
+          <p className="step-desc">마음에 드는 초고를 고르거나, 다른 방향으로 다시 써보세요.</p>
+          {drafts.length === 0 ? (
+            <p className="empty-hint">아직 생성된 초고가 없어요. 이전 단계에서 먼저 초고를 생성해보세요.</p>
+          ) : (
+            <div className="draft-grid">
+              {drafts.map((draft) => {
+                const isExpanded = expandedDraftId === draft.id;
+                return (
+                  <article key={draft.id} className={`draft ${selectedDraftId === draft.id ? "selected" : ""}`}>
+                    <div className="draft-head">
+                      <h3>{draft.title}</h3>
+                      <span className={`badge badge-${draft.status.toLowerCase()}`}>
+                        {STATUS_LABEL[draft.status] ?? draft.status}
+                      </span>
+                    </div>
+                    <p className="draft-meta">
+                      {POST_TYPE_LABEL[draft.post_type]} · 감정 {draft.sentiment} · v{draft.version_no}-{draft.variant_no}
+                    </p>
+                    {isExpanded ? (
+                      <MarkdownBlock markdown={draft.markdown} />
+                    ) : (
+                      <p className="draft-preview">{markdownPreview(draft.markdown) || "본문 내용이 비어 있습니다."}</p>
+                    )}
+                    <button
+                      type="button"
+                      className="btn-link"
+                      onClick={() => setExpandedDraftId(isExpanded ? "" : draft.id)}
+                    >
+                      {isExpanded ? "본문 접기" : "본문 전체 보기"}
+                    </button>
+                    <div className="row two">
+                      <button onClick={() => selectDraft(draft.id)} disabled={loading}>이 초고 선택</button>
+                      <button className="btn-secondary" onClick={() => regenerate(draft.id)} disabled={loading}>다른 방향 재생성</button>
+                    </div>
+                  </article>
+                );
+              })}
+            </div>
+          )}
+          <div className="step-nav">
+            <button className="btn-secondary" onClick={() => goToStep(2)}>이전</button>
+          </div>
+        </section>
+      )}
+
+      {currentStep === 4 && (
+        <section className="card">
+          <h2>발행</h2>
+          <p className="step-desc">선택한 초고를 원하는 블로그에 바로 올립니다.</p>
+
+          <label>
+            발행할 곳
+            <select value={publishProvider} onChange={(e) => setPublishProvider(e.target.value as typeof publishProvider)}>
+              <option value="wordpress">워드프레스</option>
+              <option value="tistory">티스토리</option>
+              <option value="naver">네이버 블로그{naverConnected ? "" : " (연결 필요)"}</option>
+            </select>
+          </label>
+          <button className="btn-cta" onClick={publish} disabled={loading || !selectedDraftId}>선택 초고 자동 업로드</button>
+
+          <div className="result-box">
+            <strong>결과</strong>
+            <p>{message}</p>
+            {publishResult ? (
+              <pre className="result">{JSON.stringify(publishResult, null, 2)}</pre>
+            ) : null}
+          </div>
+
+          <div className="step-nav">
+            <button className="btn-secondary" onClick={() => goToStep(3)}>이전</button>
+            <button className="btn-secondary" onClick={() => advanceTo(2)}>새 초고 만들기</button>
+          </div>
+        </section>
+      )}
     </main>
   );
 }
