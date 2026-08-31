@@ -1,4 +1,36 @@
-import { ChangeEvent, FormEvent, useMemo, useState } from "react";
+import { ChangeEvent, FormEvent, useEffect, useMemo, useState } from "react";
+
+const AUTH_STORAGE_KEY = "blogsnap.auth";
+
+function loadStoredAuth(): { access_token: string; refresh_token: string } | null {
+  try {
+    const raw = localStorage.getItem(AUTH_STORAGE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (typeof parsed?.access_token === "string" && typeof parsed?.refresh_token === "string") {
+      return parsed;
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+function persistAuth(accessToken: string, refreshToken: string) {
+  try {
+    localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify({ access_token: accessToken, refresh_token: refreshToken }));
+  } catch {
+    // best-effort only: e.g. private browsing may block storage
+  }
+}
+
+function clearStoredAuth() {
+  try {
+    localStorage.removeItem(AUTH_STORAGE_KEY);
+  } catch {
+    // ignore
+  }
+}
 
 type PostType = "review" | "explanation" | "impression";
 type SentimentValue = -2 | -1 | 0 | 1 | 2;
@@ -277,6 +309,7 @@ export function App() {
       const data = (await response.json()) as LoginResponse;
       setToken(data.access_token);
       setRefreshToken(data.refresh_token);
+      persistAuth(data.access_token, data.refresh_token);
       return data;
     } catch {
       return null;
@@ -297,6 +330,7 @@ export function App() {
       const auth = (await data.json()) as LoginResponse;
       setToken(auth.access_token);
       setRefreshToken(auth.refresh_token);
+      persistAuth(auth.access_token, auth.refresh_token);
       setMessage("로그인 완료. 프로젝트를 불러오거나 생성하세요.");
       await loadProjects(auth.access_token);
       await loadMe(auth.access_token);
@@ -306,6 +340,42 @@ export function App() {
       setLoading(false);
     }
   };
+
+  // Restore a previous session on load (e.g. after redirecting away to Naver
+  // and back — a full browser navigation clears all in-memory state), and
+  // surface the ?naver=connected / ?naver=error result of that redirect.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const naverResult = params.get("naver");
+    if (naverResult) {
+      window.history.replaceState({}, "", window.location.pathname);
+    }
+
+    const stored = loadStoredAuth();
+    if (!stored) {
+      if (naverResult === "connected") {
+        setMessage("네이버 연결은 완료됐지만 로그인 세션이 만료됐어요. 다시 로그인해주세요.");
+      } else if (naverResult === "error") {
+        setMessage("네이버 연결에 실패했어요. 다시 로그인 후 시도해주세요.");
+      }
+      return;
+    }
+
+    setToken(stored.access_token);
+    setRefreshToken(stored.refresh_token);
+    (async () => {
+      await loadProjects(stored.access_token);
+      await loadMe(stored.access_token);
+      if (naverResult === "connected") {
+        setMessage("네이버 계정 연결 완료. 이제 네이버 블로그에 바로 발행할 수 있어요.");
+      } else if (naverResult === "error") {
+        setMessage("네이버 연결에 실패했어요. 다시 시도해주세요.");
+      } else {
+        setMessage("이전 로그인 세션을 복원했어요.");
+      }
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const loadProjects = async (overrideToken?: string) => {
     try {
