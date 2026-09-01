@@ -10,7 +10,7 @@ CREATE TYPE job_status AS ENUM ('PENDING', 'RUNNING', 'SUCCEEDED', 'FAILED', 'RE
 CREATE TYPE draft_status AS ENUM ('GENERATED', 'SELECTED', 'ARCHIVED');
 CREATE TYPE publish_status AS ENUM ('REQUESTED', 'PUBLISHED', 'ERROR');
 CREATE TYPE schedule_status AS ENUM ('READY', 'SCHEDULED', 'CANCELLED');
-CREATE TYPE provider_type AS ENUM ('wordpress', 'tistory');
+CREATE TYPE provider_type AS ENUM ('wordpress', 'tistory', 'naver');
 CREATE TYPE asset_status AS ENUM ('UPLOADED', 'AVAILABLE', 'DELETED', 'ERROR');
 
 -- Users
@@ -18,6 +18,7 @@ CREATE TABLE users (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   email TEXT NOT NULL UNIQUE,
   display_name TEXT,
+  gemini_api_key_encrypted TEXT,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
@@ -130,6 +131,17 @@ CREATE TABLE provider_tokens (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   UNIQUE (user_id, provider)
 );
+
+-- OAuth login flow state (short-lived, links a provider redirect back to the BlogSnap user who started it)
+CREATE TABLE oauth_states (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  provider provider_type NOT NULL,
+  state TEXT NOT NULL UNIQUE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  expires_at TIMESTAMPTZ NOT NULL
+);
+CREATE INDEX idx_oauth_states_expires_at ON oauth_states(expires_at);
 
 -- Auth sessions (refresh token lifecycle)
 CREATE TABLE auth_sessions (

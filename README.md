@@ -615,6 +615,8 @@ PYTHONPATH=. python3 -m pytest -q tests/test_job_runner_project_scope.py
 ./scripts/day25_auth_refresh_logout_demo.sh
 ```
 
+위 실행으로 login -> refresh rotate -> logout revoke -> refresh 차단(401) 흐름을 확인합니다.
+
 ## Day 26 기록 (2026-05-01)
 - 프론트엔드 E2E 통합을 시도했으나(`feat(frontend): Day26 E2E UI integration for blog generation flow`) 같은 날 되돌림(revert) 처리되었습니다.
 - 실제 프론트엔드 통합은 Day27에서 asset 업로드 흐름과 함께 다시 작업되었습니다.
@@ -993,5 +995,29 @@ API_URL=http://127.0.0.1:8000 FRONTEND_URL=http://127.0.0.1:5173 \
   - 재생성 버그 수정: [backend/app/api/drafts.py](/Users/jin/Desktop/easy_ing/BlogSnap/backend/app/api/drafts.py) `regenerate_draft`가 항상 기본값(`키워드`/`설명`/감정 0)으로 재생성하던 것을 고쳐, `draft.source_job_id`를 통해 원래 생성 요청(키워드/감정/글종류/이미지)을 재사용하도록 수정
   - 의존성: [requirements.txt](/Users/jin/Desktop/easy_ing/BlogSnap/requirements.txt) (`google-genai`), [docker-compose.dev.yml](/Users/jin/Desktop/easy_ing/BlogSnap/docker-compose.dev.yml) (`api`/`worker`에 `WORKER_DRAFT_MODE`/`GEMINI_API_KEY`/`GEMINI_MODEL` 환경변수 전달)
 - 기본값은 여전히 `mock`이라 기존 테스트(`tests/`, 24건)는 회귀 없이 그대로 통과합니다. 실제 AI 생성을 쓰려면 `.env`에 `WORKER_DRAFT_MODE=gemini`와 [Google AI Studio](https://aistudio.google.com/apikey)에서 발급한 `GEMINI_API_KEY`를 설정하고 `docker compose -f docker-compose.dev.yml up -d --build api worker`로 재기동합니다.
+- **후속 수정**: 기본 모델 `gemini-2.5-flash`가 신규 발급 키에는 `404 no longer available to new users`로 막혀 있어 실제 생성이 계속 mock 콘텐츠로 조용히 대체되고 있었습니다. 실제 Gemini API로 사용 가능한 모델 목록을 조회해 `gemini-3.5-flash`로 기본값을 교체([backend/app/core/config.py](/Users/jin/Desktop/easy_ing/BlogSnap/backend/app/core/config.py), `.env`, `.env.example`)했고, DB에 저장된 실제 생성 결과로 서로 다른 제목/본문이 나오는 것까지 확인했습니다.
+- **테스트 격리**: 로컬 `.env`의 `WORKER_DRAFT_MODE=gemini`를 pytest가 그대로 물려받아 실제 API를 호출하며 5분 이상 걸리고 일부 실패하는 문제 발견 → [tests/conftest.py](/Users/jin/Desktop/easy_ing/BlogSnap/tests/conftest.py)에서 테스트는 항상 `mock` 모드로 강제 고정하도록 수정.
+- **글 유형별 문체 강화**: 리뷰/설명형/소감문 각각에 대해 "평가 중심/장단점 비교" · "객관적 정보 전달, 개인 일화 자제" · "개인 경험과 감상 위주 에세이"로 구체적인 작성 방향 지침을 프롬프트에 추가([backend/app/services/gemini_writer.py](/Users/jin/Desktop/easy_ing/BlogSnap/backend/app/services/gemini_writer.py)). 감정 강도는 "톤의 가장 큰 기준"으로 프롬프트에 명시.
+- Gemini 무료 티어는 모델당 **일일 20회** 요청 제한이 있어(`gemini-3.5-flash` 기준), 자체 테스트 중 한도 소진 시 `429 RESOURCE_EXHAUSTED`가 발생합니다. 자정(태평양시) 리셋 후 재시도하거나 유료 플랜으로 전환이 필요합니다.
+- **UI 스타일 재조정**: Toss 스타일(파스텔/그라데이션/필 버튼) 대신 네이버 블로그에 가까운 그린(#03c75a) 액센트 + 화이트/헤어라인 보더 기반의 미니멀한 스타일로 교체([frontend/src/styles.css](/Users/jin/Desktop/easy_ing/BlogSnap/frontend/src/styles.css)).
+- **배포 전 시크릿 점검**: `.dockerignore`가 없어 `.env`(실제 API 키 포함)가 그대로 Docker 이미지에 baked-in 되고 있던 것을 발견 → [.dockerignore](/Users/jin/Desktop/easy_ing/BlogSnap/.dockerignore) 추가로 차단. `AUTH_SECRET_KEY`가 기본값(`change-me-dev-secret`)인 채로 프로덕션에 뜨는 것을 막기 위해 `APP_ENV=production`일 때 기본값/약한 키면 서버가 기동을 거부하도록 검증 추가([backend/app/core/config.py](/Users/jin/Desktop/easy_ing/BlogSnap/backend/app/core/config.py)). 배포 전 체크리스트는 [docs/security-secrets-checklist.md](/Users/jin/Desktop/easy_ing/BlogSnap/docs/security-secrets-checklist.md) 참고. git 이력 전체(`git log --all -p`)에서 `.env`/실제 키 문자열이 커밋된 적 없는 것과, GitHub Actions 워크플로우가 Docker 이미지를 어디에도 push하지 않는 것도 확인함 — 공개 저장소이지만 실제 유출은 없었음.
+- **사용자별 Gemini API 키**: 서버 하나의 키를 모든 사용자가 나눠 쓰면 운영자에게 비용/한도 부담이 몰리는 구조라, 각자 자기 키를 연결해서 쓰도록 전환.
+  - `users.gemini_api_key_encrypted` 컬럼 추가([db/migrations/0001_init.sql](/Users/jin/Desktop/easy_ing/BlogSnap/db/migrations/0001_init.sql)), `AUTH_SECRET_KEY`에서 파생한 키로 Fernet 대칭암호화 저장/복호화([backend/app/services/secret_crypto.py](/Users/jin/Desktop/easy_ing/BlogSnap/backend/app/services/secret_crypto.py)) — DB가 유출돼도 키가 평문으로 노출되지 않음
+  - `PUT` / `DELETE /v1/auth/me/gemini-key`로 연결/해제, `GET /v1/auth/me`는 연결 여부(`gemini_key_connected`)만 반환하고 **키 값 자체는 어떤 응답에도 절대 포함하지 않음**([backend/app/api/auth.py](/Users/jin/Desktop/easy_ing/BlogSnap/backend/app/api/auth.py))
+  - 초고 생성은 이제 프로젝트 소유자가 연결한 키로만 동작하고, 서버 공용 `GEMINI_API_KEY`는 완전히 제거([backend/app/worker/executor.py](/Users/jin/Desktop/easy_ing/BlogSnap/backend/app/worker/executor.py)). 키 미연결 시 "Gemini API 키가 연결되어 있지 않습니다" 에러로 명확히 실패
+  - 프론트에 키 연결/해제 UI 추가([frontend/src/App.tsx](/Users/jin/Desktop/easy_ing/BlogSnap/frontend/src/App.tsx)) — 한 번 연결하면 이후 요청은 별도 입력 없이 저장된 키로 계속 동작
+  - 곁들여 `run-next` 실패 시 프론트가 "성공"으로 잘못 표시하던 것도 같이 수정(실제 job 상태/에러 메시지를 확인하도록 변경)
+  - 테스트: [tests/test_user_gemini_key.py](/Users/jin/Desktop/easy_ing/BlogSnap/tests/test_user_gemini_key.py) (암호화 왕복, 연결/해제, 키 미연결 시 실패). 실제 API로 연결→생성 end-to-end까지 curl로 검증 완료.
 
-위 실행으로 login -> refresh rotate -> logout revoke -> refresh 차단(401) 흐름을 확인합니다.
+## Day 63 후속 진행 (2026-08-17 ~ 2026-09-01) — 네이버 연동, 위저드 UI, 세션 유지
+
+- **테스트 DB 격리 사고 및 수정** (2026-08-17): 위 사용자별 키 작업 직후 `pytest`를 돌렸다가, `tests/conftest.py`의 `prepare_test_db`가 `db_reset.sh`를 무조건 **실제 개발 DB(`blogsnap`)에 대고 실행**하고 있다는 걸 뒤늦게 발견 — 실제 연결해두신 Gemini 키/프로젝트 데이터가 통째로 날아갔습니다. [scripts/db_reset.sh](/Users/jin/Desktop/easy_ing/BlogSnap/scripts/db_reset.sh), [scripts/db_apply_migration.sh](/Users/jin/Desktop/easy_ing/BlogSnap/scripts/db_apply_migration.sh), [scripts/db_verify_schema.sh](/Users/jin/Desktop/easy_ing/BlogSnap/scripts/db_verify_schema.sh)에 `DB_NAME` 파라미터를 추가하고, [tests/conftest.py](/Users/jin/Desktop/easy_ing/BlogSnap/tests/conftest.py)가 `DATABASE_URL`에서 파생한 `<name>_test` 전용 DB로만 테스트를 돌리도록 강제 격리. 이후 전체 테스트를 돌려도 실제 `blogsnap` DB는 건드리지 않는 것 확인.
+- **네이버 블로그 OAuth 로그인 + 발행 연동**: `ProviderType`에 `naver` 추가, 이미 스키마에 있었지만 쓰이지 않던 `provider_tokens` 테이블을 실제로 매핑해 사용.
+  - `GET /v1/auth/naver/login-url` (로그인 필요, `oauth_states`에 랜덤 state 저장) → 네이버 로그인/동의 → `GET /v1/auth/naver/callback`이 code를 토큰으로 교환해 `provider_tokens`에 Fernet 암호화 저장 → 프론트로 리다이렉트([backend/app/api/naver_oauth.py](/Users/jin/Desktop/easy_ing/BlogSnap/backend/app/api/naver_oauth.py))
+  - `naver` provider로 발행할 때는 `WORKER_PUBLISH_MODE`(mock/wordpress/tistory)와 무관하게 항상 프로젝트 소유자의 저장된 토큰으로 `openapi.naver.com/blog/writePost.json` 실호출([backend/app/worker/executor.py](/Users/jin/Desktop/easy_ing/BlogSnap/backend/app/worker/executor.py), [backend/app/worker/publishers.py](/Users/jin/Desktop/easy_ing/BlogSnap/backend/app/worker/publishers.py))
+  - 테스트: [tests/test_naver_oauth.py](/Users/jin/Desktop/easy_ing/BlogSnap/tests/test_naver_oauth.py)
+  - 참고: 네이버 블로그 글쓰기는 앱 등록 외에 별도 심사(승인)가 필요할 수 있고, `writePost.json` 성공 응답 스키마가 공식 문서화가 잘 안 되어 있어 실제 연동 시 `post_url` 파싱을 조정해야 할 수 있음.
+- **UI 전면 재설계 — 단계별 위저드 + Linear/Notion 스타일** (2026-08-27): 로그인/초고생성/선택/발행 4개 섹션이 한 화면에 전부 쌓여있어 "안 직관적"이라는 피드백 → 한 번에 한 단계만 보여주는 위저드로 재구성(진행 스텝바, 완료 단계 체크 표시, 잠긴 단계는 이동 불가). 로그인+Gemini 키 연결+프로젝트 선택을 마쳐야 다음 단계로 넘어가도록 가드. 시각 스타일은 Toss/네이버그린을 걷어내고 무채색 배경 + 인디고 포인트 컬러 + 얇은 보더 위주의 Linear/Notion풍으로 교체([frontend/src/App.tsx](/Users/jin/Desktop/easy_ing/BlogSnap/frontend/src/App.tsx), [frontend/src/styles.css](/Users/jin/Desktop/easy_ing/BlogSnap/frontend/src/styles.css)). 재구성 중 상태 메시지가 4단계 카드 안에만 렌더링되어 1~3단계에서 로그인/연결 피드백이 전혀 안 보이던 버그도 같이 발견해 수정.
+- **네이버 Client ID/Secret 연결** (2026-08-31): 사용자가 [Naver Developers](https://developers.naver.com/apps)에 앱을 등록(서비스 URL/Callback URL: `localhost` 기준)하고 발급받은 Client ID/Secret을 `.env`에 반영, [docker-compose.dev.yml](/Users/jin/Desktop/easy_ing/BlogSnap/docker-compose.dev.yml)로 `api`/`worker` 컨테이너에 전달. `GET /v1/auth/naver/login-url`이 실제 `nid.naver.com` 인증 URL을 정상 생성하는 것까지 확인.
+- **로그인 세션 유지 수정** (2026-09-01): 네이버 로그인 후 콜백으로 돌아오는 과정이 브라우저 풀 리다이렉트라, 메모리에만 있던 access/refresh 토큰이 초기화되어 "연결은 됐는데 로그아웃된 것처럼 보이는" 문제 발생. 로그인 토큰을 `localStorage`에 미러링하고 mount 시 복원하도록 수정, `?naver=connected`/`?naver=error` 콜백 쿼리도 상태 메시지로 표시 후 URL에서 제거([frontend/src/App.tsx](/Users/jin/Desktop/easy_ing/BlogSnap/frontend/src/App.tsx)). 완전히 새 탭에서 새로고침해도 세션이 복원되는 것 확인.
+- **계정 정리 사고**: 로그인 폼 이메일을 매번 다르게 입력해 `demo@blogsnap.dev`/`jeantwo@naver.com` 두 계정으로 데이터(Gemini 키, 네이버 연결, 프로젝트/초고)가 나뉘는 문제 발생. `jeantwo@naver.com`으로 통일하기로 하고 DB에서 직접 병합하던 중, 이전 단계 병합 성공 여부를 확인하지 않고 `demo@blogsnap.dev` 계정을 먼저 삭제해 그 계정에 있던 초고 3건이 함께 삭제됨(네이버 연결은 이전에 이미 옮겨져 있어 무사). **교훈**: 이 앱은 로그인 시 이메일만 입력하면 계정이 새로 생성/전환되므로, 항상 같은 이메일로 로그인해야 데이터가 한 계정에 유지됩니다.

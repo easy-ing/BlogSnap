@@ -5,6 +5,7 @@ from backend.app.api.assets import router as assets_router
 from backend.app.api.drafts import router as drafts_router
 from backend.app.api.health import router as health_router
 from backend.app.api.jobs import router as jobs_router
+from backend.app.api.naver_oauth import router as naver_oauth_router
 from backend.app.api.publish import router as publish_router
 from backend.app.api.projects import router as projects_router
 from backend.app.core.config import settings
@@ -18,6 +19,7 @@ app.add_middleware(RequestLoggingMiddleware)
 
 app.include_router(health_router)
 app.include_router(auth_router)
+app.include_router(naver_oauth_router)
 app.include_router(assets_router)
 app.include_router(projects_router)
 app.include_router(drafts_router)

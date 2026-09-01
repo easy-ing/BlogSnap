@@ -6,10 +6,11 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from backend.app.core.config import settings
-from backend.app.models.entities import Asset, Draft, Job, PublishJob
+from backend.app.models.entities import Asset, Draft, Job, Project, ProviderToken, PublishJob, User
 from backend.app.models.enums import DraftStatus, JobType, ProviderType, PublishStatus, ScheduleStatus
 from backend.app.services.gemini_writer import generate_drafts
-from backend.app.worker.publishers import publish_to_tistory, publish_to_wordpress
+from backend.app.services.secret_crypto import decrypt_secret
+from backend.app.worker.publishers import publish_to_naver, publish_to_tistory, publish_to_wordpress
 
 
 UPLOAD_ROOT = Path("tmp/uploads")
@@ -41,6 +42,28 @@ def _build_mock_markdown(keyword: str, sentiment: int, post_type: str, variant_n
     )
 
 
+def _get_owner_gemini_key(db: Session, project_id: uuid.UUID) -> str:
+    owner = db.scalar(
+        select(User).join(Project, Project.user_id == User.id).where(Project.id == project_id)
+    )
+    if not owner or not owner.gemini_api_key_encrypted:
+        raise ValueError(
+            "Gemini API 키가 연결되어 있지 않습니다. 설정에서 본인의 Gemini API 키를 먼저 연결해주세요."
+        )
+    return decrypt_secret(owner.gemini_api_key_encrypted)
+
+
+def _get_owner_naver_access_token(db: Session, project_id: uuid.UUID) -> str:
+    token_row = db.scalar(
+        select(ProviderToken)
+        .join(Project, Project.user_id == ProviderToken.user_id)
+        .where(Project.id == project_id, ProviderToken.provider == ProviderType.naver)
+    )
+    if not token_row:
+        raise ValueError("네이버 계정이 연결되어 있지 않습니다. 설정에서 네이버 로그인으로 먼저 연결해주세요.")
+    return decrypt_secret(token_row.encrypted_access_token)
+
+
 def _load_image(db: Session, image_asset_id: str | None) -> tuple[bytes | None, str | None]:
     if not image_asset_id:
         return None, None
@@ -70,9 +93,10 @@ def _execute_draft_job(db: Session, job: Job) -> dict:
 
     mode = settings.worker_draft_mode.strip().lower()
     if mode == "gemini":
+        user_api_key = _get_owner_gemini_key(db, job.project_id)
         image_bytes, image_mime_type = _load_image(db, payload.get("image_asset_id"))
         drafts_data = generate_drafts(
-            api_key=settings.gemini_api_key,
+            api_key=user_api_key,
             model=settings.gemini_model,
             keyword=keyword,
             post_type=post_type,
@@ -124,7 +148,27 @@ def _execute_publish_job(db: Session, job: Job) -> dict:
     provider = publish_job.provider
     tags = [t.strip() for t in settings.worker_publish_default_tags.split(",") if t.strip()]
 
-    if mode == "mock":
+    if provider == ProviderType.naver:
+        # Naver publishing is always per-user OAuth, regardless of worker_publish_mode:
+        # there's no server-wide "Naver account" to accidentally post to like there is
+        # for the shared WordPress/Tistory credentials, so mock-gating doesn't apply.
+        access_token = _get_owner_naver_access_token(db, job.project_id)
+        external_id, post_url = publish_to_naver(
+            access_token=access_token,
+            title=draft.title,
+            markdown=draft.markdown,
+            tags=tags,
+        )
+        publish_job.status = PublishStatus.PUBLISHED
+        publish_job.external_post_id = external_id
+        publish_job.post_url = post_url
+        publish_job.response_snapshot = {
+            "mode": "naver-oauth",
+            "provider": provider.value,
+            "external_post_id": external_id,
+            "post_url": post_url,
+        }
+    elif mode == "mock":
         publish_job.status = PublishStatus.PUBLISHED
         publish_job.external_post_id = str(publish_job.id)
         publish_job.post_url = f"{settings.worker_mock_publish_base_url}/{provider.value}/{publish_job.id}"

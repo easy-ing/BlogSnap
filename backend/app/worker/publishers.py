@@ -95,3 +95,49 @@ def publish_to_tistory(
     if not external_id and not post_url:
         raise ValueError("Unexpected Tistory response payload")
     return external_id, post_url
+
+
+def publish_to_naver(
+    *,
+    access_token: str,
+    title: str,
+    markdown: str,
+    tags: List[str],
+) -> Tuple[str, str]:
+    if not access_token:
+        raise ValueError("Naver access token is missing for naver publish mode.")
+
+    content_html = markdown_to_html(markdown)
+    payload = {
+        "title": title,
+        "contents": content_html,
+    }
+    if tags:
+        payload["tag"] = ",".join(tags)
+
+    resp = requests.post(
+        "https://openapi.naver.com/blog/writePost.json",
+        headers={"Authorization": f"Bearer {access_token}"},
+        data=payload,
+        timeout=30,
+    )
+    resp.raise_for_status()
+    data = resp.json()
+
+    # Naver's documented response shape for this endpoint isn't fully published;
+    # this covers the commonly observed {"message": {"result": {...}}} shape and
+    # falls back to keeping the raw payload visible via the caller's response_snapshot.
+    result = {}
+    if isinstance(data, dict):
+        message = data.get("message")
+        if isinstance(message, dict):
+            result = message.get("result") or {}
+
+    blog_id = str(result.get("blogId", "")) if isinstance(result, dict) else ""
+    log_no = str(result.get("logNo", "")) if isinstance(result, dict) else ""
+    external_id = log_no
+    post_url = f"https://blog.naver.com/{blog_id}/{log_no}" if blog_id and log_no else ""
+
+    if not external_id and not post_url:
+        raise ValueError(f"Unexpected Naver response payload: {data}")
+    return external_id, post_url
