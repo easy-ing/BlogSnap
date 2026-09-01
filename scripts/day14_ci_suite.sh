@@ -18,17 +18,32 @@ echo "[INFO] Install dependencies"
 echo "[INFO] Prepare test database schema"
 "$PYTHON_BIN" - <<'PY'
 import os
+import re
 import time
 from pathlib import Path
 
 import psycopg
 
-db_url = os.environ["DATABASE_URL"]
-conn_url = db_url.replace("postgresql+psycopg://", "postgresql://", 1)
+# tests/conftest.py forces the suite onto a distinct "<name>_test" database
+# (so a full DROP SCHEMA reset never touches the primary dev DB). The CI run
+# uses TEST_DB_RESET_MODE=skip, so nothing else creates that DB — do it here,
+# deriving the name the exact same way conftest does.
+base_url = os.environ["DATABASE_URL"]
+test_url = re.sub(r"/([^/]+)$", lambda m: f"/{m.group(1)}_test", base_url)
+conn_url = test_url.replace("postgresql+psycopg://", "postgresql://", 1)
+admin_url = re.sub(r"/([^/]+)$", "/postgres", conn_url)
+test_db_name = conn_url.rsplit("/", 1)[-1]
 sql = (Path("db/migrations/0001_init.sql")).read_text(encoding="utf-8")
 
 for _ in range(40):
     try:
+        with psycopg.connect(admin_url, autocommit=True) as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    "SELECT 1 FROM pg_database WHERE datname = %s", (test_db_name,)
+                )
+                if cur.fetchone() is None:
+                    cur.execute(f'CREATE DATABASE "{test_db_name}"')
         with psycopg.connect(conn_url, autocommit=True) as conn:
             with conn.cursor() as cur:
                 cur.execute("DROP SCHEMA IF EXISTS public CASCADE;")
