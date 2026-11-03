@@ -1,5 +1,4 @@
 from datetime import datetime, timedelta, timezone
-from pathlib import Path
 from uuid import UUID
 
 from sqlalchemy import select
@@ -8,9 +7,7 @@ from sqlalchemy.orm import Session
 from backend.app.core.config import settings
 from backend.app.models.entities import Asset, Project
 from backend.app.models.enums import AssetStatus
-
-
-UPLOAD_ROOT = Path("tmp/uploads")
+from backend.app.services.asset_storage import resolve_upload_path
 
 
 def purge_deleted_assets_for_project(db: Session, project_id: UUID, retention_hours: int | None = None) -> int:
@@ -29,8 +26,8 @@ def purge_deleted_assets_for_project(db: Session, project_id: UUID, retention_ho
 
     purged = 0
     for asset in candidates:
-        file_path = UPLOAD_ROOT / asset.storage_key
-        if file_path.exists():
+        file_path = resolve_upload_path(asset.storage_key)
+        if file_path and file_path.exists():
             file_path.unlink()
         db.delete(asset)
         purged += 1

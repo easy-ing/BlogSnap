@@ -1,6 +1,5 @@
 import mimetypes
 from datetime import datetime, timezone
-from pathlib import Path
 from uuid import UUID, uuid4
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile
@@ -14,12 +13,12 @@ from backend.app.models.entities import Asset, User
 from backend.app.models.enums import AssetStatus
 from backend.app.schemas.assets import AssetCleanupResponse, AssetItemResponse
 from backend.app.services.asset_cleanup import purge_deleted_assets_for_project
+from backend.app.services.asset_storage import UPLOAD_ROOT, extension_for, resolve_upload_path
 
 
 router = APIRouter(prefix="/v1/assets", tags=["assets"])
 
 
-UPLOAD_ROOT = Path("tmp/uploads")
 UPLOAD_ROOT.mkdir(parents=True, exist_ok=True)
 
 
@@ -47,7 +46,9 @@ async def upload_asset(
         raise HTTPException(status_code=400, detail=f"File too large (max {settings.asset_max_bytes} bytes)")
 
     now = datetime.now(timezone.utc)
-    storage_key = f"{project_id}/{now.strftime('%Y%m%d')}/{uuid4()}-{file.filename or 'upload.bin'}"
+    # The client-supplied filename is kept only as metadata; putting it in the path
+    # would let "../" in a filename write outside UPLOAD_ROOT.
+    storage_key = f"{project_id}/{now.strftime('%Y%m%d')}/{uuid4()}{extension_for(guessed_content_type)}"
 
     output_path = UPLOAD_ROOT / storage_key
     output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -97,8 +98,8 @@ def delete_asset(
     if asset.status == AssetStatus.DELETED:
         return asset
 
-    file_path = UPLOAD_ROOT / asset.storage_key
-    if file_path.exists():
+    file_path = resolve_upload_path(asset.storage_key)
+    if file_path and file_path.exists():
         file_path.unlink()
 
     asset.status = AssetStatus.DELETED

@@ -33,6 +33,9 @@ router = APIRouter(prefix="/v1/auth", tags=["auth"])
 
 @router.post("/login", response_model=LoginResponse)
 def login(payload: LoginRequest, db: Session = Depends(get_db)) -> LoginResponse:
+    # Email-only login has no credential check, so it must never be reachable in production.
+    if not settings.dev_login_enabled:
+        raise HTTPException(status_code=404, detail="Not Found")
     email = payload.email.strip().lower()
     user = db.scalar(select(User).where(User.email == email))
     if not user:

@@ -26,6 +26,8 @@ class Settings(BaseSettings):
     auth_secret_key: str = DEFAULT_AUTH_SECRET_KEY
     auth_token_exp_minutes: int = 120
     auth_refresh_token_exp_minutes: int = 60 * 24 * 14
+    # Email-only login (no password) for local dev/tests. Unset means "on except in production".
+    auth_dev_login_enabled: bool | None = None
     asset_max_bytes: int = 5 * 1024 * 1024
     asset_allowed_content_types: str = "image/jpeg,image/png,image/webp,image/gif"
     asset_deleted_retention_hours: int = 24
@@ -39,9 +41,19 @@ class Settings(BaseSettings):
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
+    @property
+    def is_production(self) -> bool:
+        return self.app_env.strip().lower() in ("production", "prod")
+
+    @property
+    def dev_login_enabled(self) -> bool:
+        if self.auth_dev_login_enabled is not None:
+            return self.auth_dev_login_enabled
+        return not self.is_production
+
     @model_validator(mode="after")
     def _reject_insecure_production_secrets(self) -> "Settings":
-        if self.app_env.strip().lower() not in ("production", "prod"):
+        if not self.is_production:
             return self
         if not self.auth_secret_key or self.auth_secret_key == DEFAULT_AUTH_SECRET_KEY:
             raise ValueError(

@@ -1,9 +1,13 @@
+import os
 import uuid
 from datetime import datetime, timedelta, timezone
+from pathlib import Path
 
 from sqlalchemy import select
 
 from backend.app.models.entities import Asset
+from backend.app.models.enums import AssetStatus
+from backend.app.services.asset_storage import UPLOAD_ROOT
 
 
 def _auth_headers(client) -> dict[str, str]:
@@ -114,3 +118,54 @@ def test_cleanup_purges_old_deleted_assets(client, db, monkeypatch) -> None:
 
     deleted_asset = db.scalar(select(Asset).where(Asset.id == asset_id))
     assert deleted_asset is None
+
+
+def test_upload_ignores_path_traversal_in_filename(client, db) -> None:
+    headers = _auth_headers(client)
+    project_resp = client.post("/v1/projects", json={"name": "Asset Traversal Project"}, headers=headers)
+    assert project_resp.status_code == 200
+    project_id = project_resp.json()["id"]
+
+    malicious_name = "../../../evil-traversal.png"
+    upload_resp = client.post(
+        "/v1/assets/upload",
+        headers=headers,
+        files={"file": (malicious_name, b"fake-image-bytes", "image/png")},
+        data={"project_id": project_id},
+    )
+    assert upload_resp.status_code == 200
+    payload = upload_resp.json()
+
+    asset = db.get(Asset, uuid.UUID(payload["id"]))
+    assert ".." not in asset.storage_key
+    assert asset.storage_key.startswith(f"{project_id}/")
+    assert asset.storage_key.endswith(".png")
+    assert asset.source_filename == malicious_name
+    assert not Path("evil-traversal.png").exists()
+    assert not Path("tmp/evil-traversal.png").exists()
+
+
+def test_delete_does_not_touch_files_outside_upload_root(client, db, tmp_path) -> None:
+    headers = _auth_headers(client)
+    project_resp = client.post("/v1/projects", json={"name": "Asset Legacy Key Project"}, headers=headers)
+    assert project_resp.status_code == 200
+    project_id = project_resp.json()["id"]
+
+    victim = tmp_path / "victim.txt"
+    victim.write_text("keep me")
+    asset = Asset(
+        project_id=uuid.UUID(project_id),
+        storage_key=os.path.relpath(victim, UPLOAD_ROOT),
+        source_filename="victim.txt",
+        content_type="image/png",
+        byte_size=7,
+        url="/tmp/uploads/legacy",
+        status=AssetStatus.AVAILABLE,
+    )
+    db.add(asset)
+    db.commit()
+
+    delete_resp = client.delete(f"/v1/assets/{asset.id}", headers=headers)
+    assert delete_resp.status_code == 200
+    assert delete_resp.json()["status"] == "DELETED"
+    assert victim.read_text() == "keep me"
