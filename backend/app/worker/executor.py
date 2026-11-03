@@ -1,6 +1,5 @@
 import uuid
 from datetime import datetime
-from pathlib import Path
 
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
@@ -8,12 +7,10 @@ from sqlalchemy.orm import Session
 from backend.app.core.config import settings
 from backend.app.models.entities import Asset, Draft, Job, Project, ProviderToken, PublishJob, User
 from backend.app.models.enums import DraftStatus, JobType, ProviderType, PublishStatus, ScheduleStatus
+from backend.app.services.asset_storage import resolve_upload_path
 from backend.app.services.gemini_writer import generate_drafts
 from backend.app.services.secret_crypto import decrypt_secret
 from backend.app.worker.publishers import publish_to_naver, publish_to_tistory, publish_to_wordpress
-
-
-UPLOAD_ROOT = Path("tmp/uploads")
 
 
 def _next_version_no(db: Session, project_id: uuid.UUID) -> int:
@@ -70,8 +67,8 @@ def _load_image(db: Session, image_asset_id: str | None) -> tuple[bytes | None, 
     asset = db.get(Asset, uuid.UUID(image_asset_id))
     if not asset:
         return None, None
-    file_path = UPLOAD_ROOT / asset.storage_key
-    if not file_path.exists():
+    file_path = resolve_upload_path(asset.storage_key)
+    if not file_path or not file_path.exists():
         return None, None
     return file_path.read_bytes(), asset.content_type
 

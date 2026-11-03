@@ -127,6 +127,9 @@ def update_publish_schedule(
         raise HTTPException(status_code=404, detail="Execution job not found")
     if job.status == JobStatus.SUCCEEDED:
         raise HTTPException(status_code=400, detail="Execution job already succeeded")
+    if job.status == JobStatus.RUNNING:
+        # Re-queueing a job the worker is mid-publish on would post it twice.
+        raise HTTPException(status_code=409, detail="Publish job is currently running")
 
     publish_at = _normalize_publish_at(payload.publish_at)
     now = datetime.now(timezone.utc)

@@ -3,7 +3,8 @@ import uuid
 
 from sqlalchemy import select
 
-from backend.app.models.entities import PublishJob
+from backend.app.models.entities import Job, PublishJob
+from backend.app.models.enums import JobStatus
 
 
 def _auth_headers(client, prefix: str) -> dict[str, str]:
@@ -156,3 +157,32 @@ def test_schedule_controls_require_project_ownership(client, db) -> None:
 
     deny_cancel = client.post(f"/v1/publish/{publish_job.id}/cancel", headers=other_headers)
     assert deny_cancel.status_code == 403
+
+
+def test_schedule_update_rejects_running_job(client, db) -> None:
+    headers = _auth_headers(client, "schedule-running")
+    project_id, draft_id = _prepare_selected_draft(client, headers)
+
+    publish_resp = client.post(
+        "/v1/publish",
+        json={"project_id": project_id, "draft_id": draft_id, "provider": "wordpress"},
+        headers=headers,
+    )
+    assert publish_resp.status_code == 200
+    job_id = publish_resp.json()["id"]
+
+    # Simulate the worker having claimed the job mid-publish.
+    job = db.get(Job, uuid.UUID(job_id))
+    job.status = JobStatus.RUNNING
+    db.commit()
+    publish_job = db.scalar(select(PublishJob).where(PublishJob.job_id == job.id))
+
+    patch_resp = client.patch(
+        f"/v1/publish/{publish_job.id}/schedule",
+        json={"publish_at": None},
+        headers=headers,
+    )
+    assert patch_resp.status_code == 409
+
+    db.refresh(job)
+    assert job.status == JobStatus.RUNNING

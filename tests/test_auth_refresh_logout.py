@@ -35,3 +35,16 @@ def test_logout_revokes_refresh_token(client, db) -> None:
 
     refresh_after_logout = client.post("/v1/auth/refresh", json={"refresh_token": refresh_token})
     assert refresh_after_logout.status_code == 401
+
+
+def test_dev_login_disabled_in_production(client, db, monkeypatch) -> None:
+    from backend.app.core.config import settings
+
+    monkeypatch.setattr(settings, "app_env", "production")
+    monkeypatch.setattr(settings, "auth_dev_login_enabled", None)
+    resp = client.post("/v1/auth/login", json={"email": f"prod-{uuid.uuid4()}@blogsnap.local"})
+    assert resp.status_code == 404
+
+    monkeypatch.setattr(settings, "auth_dev_login_enabled", True)
+    resp = client.post("/v1/auth/login", json={"email": f"prod-{uuid.uuid4()}@blogsnap.local"})
+    assert resp.status_code == 200
